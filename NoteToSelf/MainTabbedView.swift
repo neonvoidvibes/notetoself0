@@ -77,9 +77,9 @@ struct MainTabbedView: View {
                     .background(UIStyles.appBackground.ignoresSafeArea())
                     .cornerRadius((showMainMenu || showSettingsMenu) ? 20 : 0)
                 }
-                // Offset main content by 80% if a menu is open
-                .offset(x: showMainMenu ? geo.size.width * 0.8 :
-                        (showSettingsMenu ? -geo.size.width * 0.8 : 0))
+                // Offset main content by 60% for a 20% overlay difference
+                .offset(x: showMainMenu ? geo.size.width * 0.6 :
+                        (showSettingsMenu ? -geo.size.width * 0.6 : 0))
                 .animation(.easeInOut, value: showMainMenu || showSettingsMenu)
                 .edgesIgnoringSafeArea(.all)
                 
@@ -113,9 +113,8 @@ struct MainTabbedView: View {
                                     }
                                     .padding(.horizontal, menuIconHorizontalPadding)
                             }
-                            // Use same topSpacing for top & bottom
-                            .padding(.top, UIStyles.topSpacing)
-                            .padding(.bottom, UIStyles.topSpacing)
+                            // Add vertical padding to match main top/bottom spacing
+                            .padding(.vertical, UIStyles.topSpacing)
                             Spacer()
                         }
                         // Left menu is 80% wide
@@ -146,8 +145,8 @@ struct MainTabbedView: View {
                                     .padding(.horizontal, menuIconHorizontalPadding)
                                 Spacer()
                             }
-                            .padding(.top, UIStyles.topSpacing)
-                            .padding(.bottom, UIStyles.topSpacing)
+                            // Add vertical padding to match main top/bottom spacing
+                            .padding(.vertical, UIStyles.topSpacing)
                             Spacer()
                         }
                         .frame(width: geo.size.width * 0.8)
