@@ -54,7 +54,6 @@ struct MainTabbedView: View {
                             
                             // TAB BAR (header row)
                             TabBarView(selectedTab: $selectedTab)
-                                .padding(.top, 20)
                                 .frame(height: 50)
                             
                             // SELECTED CONTENT

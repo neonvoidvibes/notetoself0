@@ -41,12 +41,16 @@ struct UIStyles {
             self.content = content
         }
         var body: some View {
-            ZStack(alignment: .topLeading) {
-                appBackground.ignoresSafeArea()
-                content()
+            GeometryReader { geo in
+                ZStack(alignment: .topLeading) {
+                    appBackground.ignoresSafeArea()
+                    VStack(alignment: .leading, spacing: 0) {
+                        Spacer().frame(height: geo.safeAreaInsets.top + topSpacing)
+                        content()
+                    }
                     .padding(.horizontal, globalHorizontalPadding)
                     .padding(.bottom, globalVerticalPadding)
-                    .padding(.top, topSpacing) // Apply universal top spacing to all views
+                }
             }
         }
     }
