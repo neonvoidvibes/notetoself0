@@ -24,41 +24,16 @@ struct UIStyles {
         "Excited": Color.orange
     ]
     
-    // MARK: - Chat UI Colors and Styles (Updated)
+    // MARK: - Chat UI Colors and Styles
     static let chatBackground = Color(hex: "#000000")
-    // Updated chat bubble colors:
+    // Define chat input container and field backgrounds
+    static let chatInputContainerBackground = Color(hex: "#555555")
+    static let chatInputContainerCornerRadius: CGFloat = 12
+    static let chatInputFieldBackground = chatInputContainerBackground
+    // Update chat bubble colors per new spec
     static let userMessageBubbleColor = offWhite
     static let assistantMessageBubbleColor = Color(hex: "#555555")
-    // Chat bubble rounding: more rounded corners except one lower corner (user: no round on lower right, assistant: no round on lower left)
-    static let chatBubbleCornerRadius: CGFloat = 16
-    // New chat font
     static let chatFont = Font.custom("Menlo", size: 16)
-    
-    // Custom shape for chat bubbles with selective rounded corners
-    struct ChatBubbleShape: Shape {
-        var isUser: Bool
-
-        func path(in rect: CGRect) -> Path {
-            var corners: UIRectCorner = [.topLeft, .topRight, .bottomLeft, .bottomRight]
-            if isUser {
-                // For user messages, do not round the lower right corner
-                corners.remove(.bottomRight)
-            } else {
-                // For assistant messages, do not round the lower left corner
-                corners.remove(.bottomLeft)
-            }
-            let path = UIBezierPath(roundedRect: rect, byRoundingCorners: corners, cornerRadii: CGSize(width: chatBubbleCornerRadius, height: chatBubbleCornerRadius))
-            return Path(path.cgPath)
-        }
-    }
-    
-    // Chat input container style
-    static let chatInputContainerBackground = Color(hex: "#555555")
-    static let chatInputContainerCornerRadius: CGFloat = 25
-
-    // Send button style: round white button with an upward arrow in color #555555 svg
-    static let chatSendButtonColor = Color.white
-    static let chatSendButtonIconColor = Color(hex: "#555555")
     
     // MARK: - Layout Constants
     static let globalHorizontalPadding: CGFloat = 20
@@ -117,10 +92,10 @@ struct UIStyles {
     // MARK: - Custom Button Styles
     
     struct PrimaryButtonStyle: ButtonStyle {
-        func makeBody(configuration: ButtonStyleConfiguration) -> some View {
+        func makeBody(configuration: ButtonStyle.Configuration) -> some View {
             configuration.label
                 .font(UIStyles.bodyFont)
-                .foregroundColor(Color.black)
+                .foregroundColor(.black)
                 .padding(.horizontal, 20)
                 .padding(.vertical, 12)
                 .background(UIStyles.accentColor)
@@ -138,10 +113,10 @@ struct UIStyles {
     }
     
     struct FullWidthSaveButtonStyle: ButtonStyle {
-        func makeBody(configuration: ButtonStyleConfiguration) -> some View {
+        func makeBody(configuration: ButtonStyle.Configuration) -> some View {
             configuration.label
                 .font(UIStyles.bodyFont)
-                .foregroundColor(Color.black)
+                .foregroundColor(.black)
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 12)
                 .background(UIStyles.accentColor)
@@ -165,11 +140,27 @@ struct UIStyles {
             .padding()
             .background(cardBackground)
             .cornerRadius(defaultCornerRadius)
-            .shadow(color: Color.black.opacity(0.15), radius: 4, x: 0, y: 2)
+            .shadow(color: .black.opacity(0.15), radius: 4, x: 0, y: 2)
         }
     }
     
     static let defaultCornerRadius: CGFloat = 12
+    
+    // MARK: - Chat Bubble Shape
+    struct ChatBubbleShape: Shape {
+        var isUser: Bool
+        func path(in rect: CGRect) -> Path {
+            let path: UIBezierPath
+            if isUser {
+                // Round all corners except lower right for user messages
+                path = UIBezierPath(roundedRect: rect, byRoundingCorners: [.topLeft, .topRight, .bottomLeft], cornerRadii: CGSize(width: defaultCornerRadius, height: defaultCornerRadius))
+            } else {
+                // Round all corners except lower left for assistant messages
+                path = UIBezierPath(roundedRect: rect, byRoundingCorners: [.topLeft, .topRight, .bottomRight], cornerRadii: CGSize(width: defaultCornerRadius, height: defaultCornerRadius))
+            }
+            return Path(path.cgPath)
+        }
+    }
 }
 
 extension Color {

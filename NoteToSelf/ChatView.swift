@@ -13,7 +13,7 @@ struct ChatView: View {
                             .id(message.id)
                     }
                 }
-                .onChange(of: viewModel.messages.count) { oldValue, newValue in
+                .onChange(of: viewModel.messages.count) { _, _ in
                     if let lastID = viewModel.messages.last?.id {
                         withAnimation {
                             scrollProxy.scrollTo(lastID, anchor: .bottom)
@@ -21,39 +21,34 @@ struct ChatView: View {
                     }
                 }
             }
-            // New Chat Input Container
-            VStack(spacing: 0) {
-                // Multiline TextEditor for input with transparent background
+            // Chat input container with proper padding and rounded corners
+            HStack(spacing: 8) {
                 TextEditor(text: $currentInput)
                     .font(UIStyles.bodyFont)
                     .foregroundColor(.white)
-                    .background(Color.clear)
-                    .frame(minHeight: 40, maxHeight: 100) // Expands up to approx 3 rows
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 8)
-                HStack {
-                    Spacer()
-                    Button(action: {
-                        let trimmed = currentInput.trimmingCharacters(in: .whitespacesAndNewlines)
-                        guard !trimmed.isEmpty else { return }
-                        viewModel.sendMessage(trimmed)
-                        currentInput = ""
-                    }) {
-                        Image(systemName: "arrow.up")
-                            .resizable()
-                            .aspectRatio(contentMode: .fit)
-                            .frame(width: 20, height: 20)
-                            .foregroundColor(UIStyles.chatSendButtonIconColor)
-                            .padding()
-                    }
-                    .background(UIStyles.chatSendButtonColor)
-                    .clipShape(Circle())
+                    .scrollContentBackground(.hidden)
+                    .background(UIStyles.chatInputFieldBackground)
+                    .cornerRadius(UIStyles.defaultCornerRadius)
+                    .frame(minHeight: 40, maxHeight: 100)
+                Button(action: {
+                    let trimmed = currentInput.trimmingCharacters(in: .whitespacesAndNewlines)
+                    guard !trimmed.isEmpty else { return }
+                    viewModel.sendMessage(trimmed)
+                    currentInput = ""
+                }) {
+                    Image(systemName: "arrow.up")
+                        .font(Font.system(size: 26, weight: .bold))
+                        .foregroundColor(Color(hex: "#555555"))
                 }
-                .padding(.horizontal, 8)
-                .padding(.bottom, 8)
+                .frame(width: 36, height: 36)
+                .background(Color.white)
+                .clipShape(Circle())
             }
+            .padding(.horizontal, UIStyles.globalHorizontalPadding)
+            .padding(.vertical, 8)
+            .padding(.bottom, 16)
             .background(UIStyles.chatInputContainerBackground)
-            .clipShape(RoundedRectangle(cornerRadius: UIStyles.chatInputContainerCornerRadius))
+            .cornerRadius(UIStyles.chatInputContainerCornerRadius)
         }
         .background(UIStyles.chatBackground.edgesIgnoringSafeArea(.all))
     }
