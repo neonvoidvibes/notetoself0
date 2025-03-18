@@ -6,7 +6,6 @@ final class PersistenceController {
     let container: NSPersistentContainer
 
     init(inMemory: Bool = false) {
-        // Attempt to load the model named "NoteToSelf" from the bundle
         guard let modelURL = Bundle.main.url(forResource: "NoteToSelf", withExtension: "momd"),
               let managedObjectModel = NSManagedObjectModel(contentsOf: modelURL) else {
             fatalError("Failed to locate or load the NoteToSelf model")
@@ -19,8 +18,8 @@ final class PersistenceController {
         }
         
         container.loadPersistentStores { storeDescription, error in
-            if let error = error as NSError? {
-                fatalError("Unresolved error \\(error), \\(error.userInfo)")
+            if let error = error {
+                fatalError("Unresolved error \(error.localizedDescription)")
             }
         }
     }

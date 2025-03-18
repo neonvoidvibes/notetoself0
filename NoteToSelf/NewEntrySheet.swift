@@ -10,12 +10,14 @@ struct NewEntrySheet: View {
     let moodOptions = ["Happy", "Neutral", "Sad", "Stressed", "Excited"]
     
     var body: some View {
-        NavigationView {
+        // Using an overlay card style with background blur
+        ZStack {
+            Color.black.opacity(0.4).edgesIgnoringSafeArea(.all)
             VStack(alignment: .leading, spacing: 16) {
-                Text("Add Quick Entry")
+                Text("Add Note")
                     .font(UIStyles.headingFont)
                     .foregroundColor(UIStyles.textColor)
-                
+                    .padding(.bottom, UIStyles.headingFontSize) // Extra padding using defined constant
                 // Mood picker
                 ScrollView(.horizontal, showsIndicators: false) {
                     HStack(spacing: 12) {
@@ -33,17 +35,15 @@ struct NewEntrySheet: View {
                         }
                     }
                 }
-                
                 // TextEditor with placeholder
                 ZStack(alignment: .topLeading) {
                     TextEditor(text: $text)
                         .font(UIStyles.bodyFont)
-                        .foregroundColor(UIStyles.textColor)
+                        .foregroundColor(Color.white)
                         .frame(height: 120)
                         .padding(8)
-                        .background(UIStyles.cardBackground)
+                        .background(UIStyles.entryBackground)
                         .cornerRadius(UIStyles.defaultCornerRadius)
-                    
                     if text.isEmpty {
                         Text("Write a short note...")
                             .font(UIStyles.bodyFont)
@@ -52,9 +52,7 @@ struct NewEntrySheet: View {
                             .padding(.vertical, 12)
                     }
                 }
-                
                 Spacer()
-                
                 HStack {
                     Spacer()
                     Button("Save") {
@@ -65,16 +63,9 @@ struct NewEntrySheet: View {
                 }
             }
             .padding()
-            .background(UIStyles.appBackground.edgesIgnoringSafeArea(.all))
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") {
-                        dismiss()
-                    }
-                    .foregroundColor(UIStyles.accentColor)
-                }
-            }
+            .background(Color.white.opacity(0.05))
+            .cornerRadius(UIStyles.defaultCornerRadius)
+            .padding(.horizontal, 40)
         }
     }
     
