@@ -69,7 +69,7 @@ struct MoodChartView: View {
                     .font(UIStyles.bodyFont)
                     .foregroundColor(UIStyles.textColor)
                     // Position the date label below the dot; assume dot center is at y:50 and dot radius is 9, so place the label at y: 50 + 9 + 10 = 69.
-                    .position(x: xPos, y: 69)
+                    .position(x: xPos, y: 75)
             }
         }
         // The overall frame should at least accommodate the line extension to the left.
