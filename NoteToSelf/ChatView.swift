@@ -5,7 +5,7 @@ struct ChatView: View {
     @State private var currentInput: String = ""
     
     var body: some View {
-        VStack {
+        VStack(spacing: 0) {
             ScrollViewReader { scrollProxy in
                 ScrollView {
                     ForEach(viewModel.messages, id: \.id) { message in
@@ -21,24 +21,39 @@ struct ChatView: View {
                     }
                 }
             }
-            
-            HStack {
-                TextField("Type a message...", text: $currentInput)
-                    .textFieldStyle(RoundedBorderTextFieldStyle())
-                Button(action: {
-                    let trimmed = currentInput.trimmingCharacters(in: .whitespacesAndNewlines)
-                    guard !trimmed.isEmpty else { return }
-                    viewModel.sendMessage(trimmed)
-                    currentInput = ""
-                }) {
-                    Text("Send")
-                        .padding()
-                        .background(UIStyles.chatSendButtonBackground)
-                        .foregroundColor(.white)
-                        .cornerRadius(8)
+            // New Chat Input Container
+            VStack(spacing: 0) {
+                // Multiline TextEditor for input with transparent background
+                TextEditor(text: $currentInput)
+                    .font(UIStyles.bodyFont)
+                    .foregroundColor(.white)
+                    .background(Color.clear)
+                    .frame(minHeight: 40, maxHeight: 100) // Expands up to approx 3 rows
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 8)
+                HStack {
+                    Spacer()
+                    Button(action: {
+                        let trimmed = currentInput.trimmingCharacters(in: .whitespacesAndNewlines)
+                        guard !trimmed.isEmpty else { return }
+                        viewModel.sendMessage(trimmed)
+                        currentInput = ""
+                    }) {
+                        Image(systemName: "arrow.up")
+                            .resizable()
+                            .aspectRatio(contentMode: .fit)
+                            .frame(width: 20, height: 20)
+                            .foregroundColor(UIStyles.chatSendButtonIconColor)
+                            .padding()
+                    }
+                    .background(UIStyles.chatSendButtonColor)
+                    .clipShape(Circle())
                 }
+                .padding(.horizontal, 8)
+                .padding(.bottom, 8)
             }
-            .padding()
+            .background(UIStyles.chatInputContainerBackground)
+            .clipShape(RoundedRectangle(cornerRadius: UIStyles.chatInputContainerCornerRadius))
         }
         .background(UIStyles.chatBackground.edgesIgnoringSafeArea(.all))
     }
@@ -54,8 +69,8 @@ struct ChatMessageBubble: View {
                     Text(message.content ?? "")
                         .font(UIStyles.chatFont)
                         .padding()
-                        .background(UIStyles.assistantBubbleColor)
-                        .cornerRadius(10)
+                        .background(UIStyles.assistantMessageBubbleColor)
+                        .clipShape(UIStyles.ChatBubbleShape(isUser: false))
                     Spacer()
                 }
             } else {
@@ -64,8 +79,8 @@ struct ChatMessageBubble: View {
                     Text(message.content ?? "")
                         .font(UIStyles.chatFont)
                         .padding()
-                        .background(UIStyles.userBubbleColor)
-                        .cornerRadius(10)
+                        .background(UIStyles.userMessageBubbleColor)
+                        .clipShape(UIStyles.ChatBubbleShape(isUser: true))
                 }
             }
         }

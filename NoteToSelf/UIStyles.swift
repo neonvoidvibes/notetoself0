@@ -24,12 +24,41 @@ struct UIStyles {
         "Excited": Color.orange
     ]
     
-    // MARK: - Chat UI Colors and Styles
+    // MARK: - Chat UI Colors and Styles (Updated)
     static let chatBackground = Color(hex: "#000000")
-    static let chatSendButtonBackground = Color(hex: "#007AFF")
-    static let assistantBubbleColor = Color.gray.opacity(0.2)
-    static let userBubbleColor = Color.blue.opacity(0.8)
+    // Updated chat bubble colors:
+    static let userMessageBubbleColor = offWhite
+    static let assistantMessageBubbleColor = Color(hex: "#555555")
+    // Chat bubble rounding: more rounded corners except one lower corner (user: no round on lower right, assistant: no round on lower left)
+    static let chatBubbleCornerRadius: CGFloat = 16
+    // New chat font
     static let chatFont = Font.custom("Menlo", size: 16)
+    
+    // Custom shape for chat bubbles with selective rounded corners
+    struct ChatBubbleShape: Shape {
+        var isUser: Bool
+
+        func path(in rect: CGRect) -> Path {
+            var corners: UIRectCorner = [.topLeft, .topRight, .bottomLeft, .bottomRight]
+            if isUser {
+                // For user messages, do not round the lower right corner
+                corners.remove(.bottomRight)
+            } else {
+                // For assistant messages, do not round the lower left corner
+                corners.remove(.bottomLeft)
+            }
+            let path = UIBezierPath(roundedRect: rect, byRoundingCorners: corners, cornerRadii: CGSize(width: chatBubbleCornerRadius, height: chatBubbleCornerRadius))
+            return Path(path.cgPath)
+        }
+    }
+    
+    // Chat input container style
+    static let chatInputContainerBackground = Color(hex: "#555555")
+    static let chatInputContainerCornerRadius: CGFloat = 25
+
+    // Send button style: round white button with an upward arrow in color #555555 svg
+    static let chatSendButtonColor = Color.white
+    static let chatSendButtonIconColor = Color(hex: "#555555")
     
     // MARK: - Layout Constants
     static let globalHorizontalPadding: CGFloat = 20
@@ -88,10 +117,10 @@ struct UIStyles {
     // MARK: - Custom Button Styles
     
     struct PrimaryButtonStyle: ButtonStyle {
-        func makeBody(configuration: ButtonStyle.Configuration) -> some View {
+        func makeBody(configuration: ButtonStyleConfiguration) -> some View {
             configuration.label
                 .font(UIStyles.bodyFont)
-                .foregroundColor(.black)
+                .foregroundColor(Color.black)
                 .padding(.horizontal, 20)
                 .padding(.vertical, 12)
                 .background(UIStyles.accentColor)
@@ -109,10 +138,10 @@ struct UIStyles {
     }
     
     struct FullWidthSaveButtonStyle: ButtonStyle {
-        func makeBody(configuration: ButtonStyle.Configuration) -> some View {
+        func makeBody(configuration: ButtonStyleConfiguration) -> some View {
             configuration.label
                 .font(UIStyles.bodyFont)
-                .foregroundColor(.black)
+                .foregroundColor(Color.black)
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 12)
                 .background(UIStyles.accentColor)
@@ -136,7 +165,7 @@ struct UIStyles {
             .padding()
             .background(cardBackground)
             .cornerRadius(defaultCornerRadius)
-            .shadow(color: .black.opacity(0.15), radius: 4, x: 0, y: 2)
+            .shadow(color: Color.black.opacity(0.15), radius: 4, x: 0, y: 2)
         }
     }
     
