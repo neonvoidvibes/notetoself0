@@ -25,8 +25,7 @@ struct UIStyles {
     // MARK: - Layout Constants
     static let globalHorizontalPadding: CGFloat = 20
     static let globalVerticalPadding: CGFloat = 16
-    static let defaultCornerRadius: CGFloat = 12
-    static let topSpacing: CGFloat = 60  // enforce consistent top spacing
+    static let topSpacing: CGFloat = 80  // increased universal top spacing
     
     // MARK: - Typography
     static let headingFont = Font.custom("Menlo", size: 48)
@@ -46,7 +45,8 @@ struct UIStyles {
                 appBackground.ignoresSafeArea()
                 content()
                     .padding(.horizontal, globalHorizontalPadding)
-                    .padding(.vertical, globalVerticalPadding)
+                    .padding(.bottom, globalVerticalPadding)
+                    .padding(.top, topSpacing) // Apply universal top spacing to all views
             }
         }
     }
@@ -109,6 +109,8 @@ struct UIStyles {
             .shadow(color: .black.opacity(0.15), radius: 4, x: 0, y: 2)
         }
     }
+    
+    static let defaultCornerRadius: CGFloat = 12
 }
 
 extension Color {
