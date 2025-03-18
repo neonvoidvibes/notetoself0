@@ -10,16 +10,25 @@ final class GPT4ChatService {
         self.openAIClient = ResponsesAPI(authToken: apiKey)
     }
     
+    private func createModel(from id: String) -> Model {
+        guard let data = "\"\(id)\"".data(using: .utf8),
+              let model = try? JSONDecoder().decode(Model.self, from: data) else {
+            fatalError("Failed to create Model from id \(id)")
+        }
+        return model
+    }
+    
     func sendMessage(systemPrompt: String, userMessage: String) async throws -> String {
+        let model = createModel(from: "gpt-4o")
         let request = Request(
-            model: "gpt-4o",
+            model: model,
             input: .text(userMessage),
             instructions: systemPrompt
         )
         let result = try await openAIClient.create(request)
         switch result {
         case .success(let response):
-            return response.outputText ?? ""
+            return response.outputText
         case .failure(let error):
             throw error
         }

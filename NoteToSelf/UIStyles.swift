@@ -88,10 +88,10 @@ struct UIStyles {
     // MARK: - Custom Button Styles
     
     struct PrimaryButtonStyle: ButtonStyle {
-        func makeBody(configuration: Configuration) -> some View {
+        func makeBody(configuration: ButtonStyle.Configuration) -> some View {
             configuration.label
                 .font(UIStyles.bodyFont)
-                .foregroundColor(Color.black)
+                .foregroundColor(.black)
                 .padding(.horizontal, 20)
                 .padding(.vertical, 12)
                 .background(UIStyles.accentColor)
@@ -109,10 +109,10 @@ struct UIStyles {
     }
     
     struct FullWidthSaveButtonStyle: ButtonStyle {
-        func makeBody(configuration: Configuration) -> some View {
+        func makeBody(configuration: ButtonStyle.Configuration) -> some View {
             configuration.label
                 .font(UIStyles.bodyFont)
-                .foregroundColor(Color.black)
+                .foregroundColor(.black)
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 12)
                 .background(UIStyles.accentColor)
