@@ -53,9 +53,10 @@ struct OverviewView: View {
                 }
                 .padding(.horizontal)
                 
-                // Calendar container with dots and swipe gesture
+                // Entire calendar container is swipeable
                 MonthCalendarView(baseDate: currentMonth)
                     .padding(.horizontal)
+                    .contentShape(Rectangle())
                     .transition(.slide)
                     .gesture(
                         DragGesture(minimumDistance: 20)
@@ -124,7 +125,7 @@ struct MonthCalendarView: View {
                     .frame(height: circleSize)
                     .id("offset-\(index)")
             }
-            // For each day, compute the actual date and render a dot with a unique ID
+            // For each day, compute the actual date and render a dot with unique IDs
             ForEach(1...daysCount, id: \.self) { dayIndex in
                 let realDate = CalendarHelper.calendar.date(byAdding: .day, value: dayIndex - 1, to: start)!
                 let dayFloor = CalendarHelper.stripTime(realDate)
