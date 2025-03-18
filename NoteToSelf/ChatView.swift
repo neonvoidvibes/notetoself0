@@ -26,8 +26,8 @@ struct ChatView: View {
                 TextEditor(text: $currentInput)
                     .font(UIStyles.bodyFont)
                     .foregroundColor(.white)
+                    .accentColor(UIStyles.accentColor)
                     .scrollContentBackground(.hidden)
-                    .background(UIStyles.chatInputFieldBackground)
                     .cornerRadius(UIStyles.defaultCornerRadius)
                     .frame(minHeight: 40, maxHeight: 100)
                 Button(action: {
@@ -47,8 +47,8 @@ struct ChatView: View {
             .padding(.horizontal, UIStyles.globalHorizontalPadding)
             .padding(.vertical, 8)
             .padding(.bottom, 16)
-            .background(UIStyles.chatInputContainerBackground)
-            .cornerRadius(UIStyles.chatInputContainerCornerRadius)
+            .background(Color(hex: "#313131"))
+            .cornerRadius(UIStyles.chatInputContainerCornerRadius * 2)
         }
         .background(UIStyles.chatBackground.edgesIgnoringSafeArea(.all))
     }
