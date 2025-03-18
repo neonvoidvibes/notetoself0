@@ -7,7 +7,6 @@ struct NewEntrySheet: View {
     @State private var text: String = ""
     @State private var selectedMood: String = ""
     
-    // Some simple moods for demonstration
     let moodOptions = ["Happy", "Neutral", "Sad", "Stressed", "Excited"]
     
     var body: some View {
@@ -28,8 +27,8 @@ struct NewEntrySheet: View {
                                     .padding(.vertical, 8)
                                     .padding(.horizontal, 12)
                                     .background(selectedMood == mood ? UIStyles.moodColors[mood] ?? UIStyles.accentColor : UIStyles.cardBackground)
-                                    .foregroundColor(selectedMood == mood ? .white : UIStyles.textColor)
-                                    .cornerRadius(12)
+                                    .foregroundColor(selectedMood == mood ? Color.black : UIStyles.textColor)
+                                    .cornerRadius(UIStyles.defaultCornerRadius)
                             }
                         }
                     }
@@ -43,7 +42,7 @@ struct NewEntrySheet: View {
                         .frame(height: 120)
                         .padding(8)
                         .background(UIStyles.cardBackground)
-                        .cornerRadius(12)
+                        .cornerRadius(UIStyles.defaultCornerRadius)
                     
                     if text.isEmpty {
                         Text("Write a short note...")

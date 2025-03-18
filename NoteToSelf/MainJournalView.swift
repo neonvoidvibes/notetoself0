@@ -8,64 +8,94 @@ struct MainJournalView: View {
     ) private var entries: FetchedResults<JournalEntryEntity>
     
     @State private var showNewEntry = false
-    
-    // Define two flexible columns for the grid
-    let columns: [GridItem] = [
-        GridItem(.flexible(), spacing: 12),
-        GridItem(.flexible(), spacing: 12)
-    ]
+    @State private var showInsights = false  // Toggle for chart view
     
     var body: some View {
         UIStyles.CustomZStack {
             VStack(alignment: .leading, spacing: 20) {
-                // Header: Title and "New Entry" button
+                // Header: Title only (left-aligned)
+                Text("Note to Self")
+                    .font(.system(size: 32, weight: .bold, design: .rounded))
+                    .foregroundColor(UIStyles.textColor)
+                
+                // "+ Add" button positioned just above the entries, right-aligned
                 HStack {
-                    Text("Daily Journal")
-                        .font(UIStyles.headingFont)
-                        .foregroundColor(UIStyles.textColor)
                     Spacer()
                     Button {
                         showNewEntry.toggle()
                     } label: {
-                        Image(systemName: "plus.circle.fill")
-                            .resizable()
-                            .frame(width: 28, height: 28)
-                            .foregroundColor(UIStyles.accentColor)
+                        Text("+ Add")
+                            .font(UIStyles.bodyFont)
+                            .foregroundColor(Color.black)  // Text on accent bg is black
+                            .padding(.horizontal, 20)
+                            .padding(.vertical, 12)
+                            .background(UIStyles.accentColor)
+                            .cornerRadius(UIStyles.defaultCornerRadius)
                     }
                 }
                 
                 // Daily Streak Info
                 DailyStreakView(entries: entries)
                 
-                // Timeline: Use LazyVGrid with 2 columns
+                // Timeline: Full-width entries in a LazyVStack
                 ScrollView {
-                    LazyVGrid(columns: columns, spacing: 12) {
+                    LazyVStack(spacing: 12) {
                         ForEach(entries) { entry in
-                            UIStyles.Card {
-                                // Show mood and truncated text (one line)
-                                if let mood = entry.mood, !mood.isEmpty {
-                                    Text("Mood: \(mood)")
-                                        .font(UIStyles.bodyFont)
-                                        .foregroundColor(UIStyles.accentColor)
-                                }
+                            HStack {
                                 if let text = entry.text, !text.isEmpty {
                                     Text(text)
                                         .font(UIStyles.bodyFont)
-                                        .foregroundColor(UIStyles.textColor)
+                                        .foregroundColor(.white)
                                         .lineLimit(1)
                                 }
+                                Spacer()
+                                if let mood = entry.mood, !mood.isEmpty,
+                                   let moodColor = UIStyles.moodColors[mood] {
+                                    Circle()
+                                        .fill(moodColor)
+                                        .frame(width: 12, height: 12)
+                                }
                             }
+                            .padding()
+                            .background(UIStyles.entryBackground)
+                            .cornerRadius(UIStyles.defaultCornerRadius)
                         }
                     }
                     .padding(.top, 8)
                 }
                 
-                Divider()
-                    .background(Color.white.opacity(0.5))
+                // Chart header: "Notes" and "Insights" left-adjusted with larger font
+                HStack(spacing: 20) {
+                    Button(action: {
+                        showInsights = false
+                    }) {
+                        Text("Notes")
+                            .font(.system(size: 24, weight: .bold, design: .rounded))
+                            .foregroundColor(showInsights ? Color.gray : UIStyles.accentColor)
+                    }
+                    Button(action: {
+                        showInsights = true
+                    }) {
+                        Text("Insights")
+                            .font(.system(size: 24, weight: .bold, design: .rounded))
+                            .foregroundColor(showInsights ? UIStyles.accentColor : Color.gray)
+                    }
+                }
+                .padding(.leading, UIStyles.globalHorizontalPadding)
                 
-                // Mood Chart View added to bottom half
-                MoodChartView(entries: entries)
+                // Chart area: Swap between MoodChartView and Insights placeholder
+                if showInsights {
+                    VStack {
+                        Text("Insights coming soon")
+                            .font(UIStyles.bodyFont)
+                            .foregroundColor(UIStyles.textColor)
+                        Spacer()
+                    }
                     .frame(height: 200)
+                } else {
+                    MoodChartView(entries: entries)
+                        .frame(height: 200)
+                }
                 
                 Spacer()
             }

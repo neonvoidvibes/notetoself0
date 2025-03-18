@@ -2,10 +2,12 @@ import SwiftUI
 
 struct UIStyles {
     // MARK: - Colors
-    static let appBackground = Color(hex: "#222530")
-    static let cardBackground = Color("CardBackground") // defined in Assets, can be adjusted if needed
-    static let accentColor = Color("AccentColor")
+    static let appBackground = Color(hex: "#000000")  // Updated to pure black
+    static let cardBackground = Color("CardBackground") // defined in Assets, adjustable if needed
+    static let accentColor = Color(hex: "#E2BF62")      // Updated accent color
     static let textColor = Color("TextColor")
+    static let offWhite = Color(red: 0.95, green: 0.95, blue: 0.95)
+    static let entryBackground = Color(hex: "#0A0A0A")  // New bg for submitted entries
     
     // Proper colors for moods
     static let moodColors: [String: Color] = [
@@ -19,7 +21,7 @@ struct UIStyles {
     // MARK: - Layout Constants
     static let globalHorizontalPadding: CGFloat = 20
     static let globalVerticalPadding: CGFloat = 16
-    static let cardCornerRadius: CGFloat = 20 // Increased rounding
+    static let defaultCornerRadius: CGFloat = 12  // Globally defined rounded corner radius
     
     // MARK: - Typography
     static let headingFont = Font.system(size: 26, weight: .bold, design: .rounded)
@@ -31,15 +33,12 @@ struct UIStyles {
     /// Custom ZStack with global margins and background color
     struct CustomZStack<Content: View>: View {
         let content: () -> Content
-        
         init(@ViewBuilder content: @escaping () -> Content) {
             self.content = content
         }
-        
         var body: some View {
             ZStack(alignment: .topLeading) {
-                appBackground
-                    .edgesIgnoringSafeArea(.all)
+                appBackground.edgesIgnoringSafeArea(.all)
                 content()
                     .padding(.horizontal, globalHorizontalPadding)
                     .padding(.vertical, globalVerticalPadding)
@@ -52,7 +51,6 @@ struct UIStyles {
         let alignment: HorizontalAlignment
         let spacing: CGFloat
         let content: () -> Content
-        
         init(alignment: HorizontalAlignment = .leading,
              spacing: CGFloat = 12,
              @ViewBuilder content: @escaping () -> Content) {
@@ -60,7 +58,6 @@ struct UIStyles {
             self.spacing = spacing
             self.content = content
         }
-        
         var body: some View {
             VStack(alignment: alignment, spacing: spacing) {
                 content()
@@ -70,42 +67,38 @@ struct UIStyles {
     }
     
     // MARK: - Custom Button Styles
-    
     struct PrimaryButtonStyle: ButtonStyle {
         func makeBody(configuration: Configuration) -> some View {
             configuration.label
                 .font(UIStyles.bodyFont)
-                .foregroundColor(.white)
+                .foregroundColor(Color.black)  // Text on accent background now black
                 .padding(.horizontal, 20)
                 .padding(.vertical, 12)
                 .background(UIStyles.accentColor)
-                .cornerRadius(12) // Increased rounding on buttons
+                .cornerRadius(UIStyles.defaultCornerRadius)
                 .scaleEffect(configuration.isPressed ? 0.95 : 1.0)
                 .opacity(configuration.isPressed ? 0.8 : 1.0)
         }
     }
     
     static func primaryButton<Label: View>(@ViewBuilder label: () -> Label) -> some View {
-        Button(action: {}) {
-            label()
-        }.buttonStyle(PrimaryButtonStyle())
+        Button(action: {}) { label() }
+            .buttonStyle(PrimaryButtonStyle())
     }
     
     // MARK: - Card Container
     struct Card<Content: View>: View {
         let content: () -> Content
-        
         init(@ViewBuilder content: @escaping () -> Content) {
             self.content = content
         }
-        
         var body: some View {
             VStack(spacing: 8) {
                 content()
             }
             .padding()
-            .background(UIStyles.cardBackground)
-            .cornerRadius(UIStyles.cardCornerRadius)
+            .background(cardBackground)
+            .cornerRadius(UIStyles.defaultCornerRadius)
             .shadow(color: .black.opacity(0.15), radius: 4, x: 0, y: 2)
         }
     }
