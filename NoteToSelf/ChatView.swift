@@ -21,7 +21,11 @@ struct ChatView: View {
                     }
                 }
             }
-            // Chat input container with proper padding and rounded corners
+            // Add black margin between chat bubbles and the input container
+            Rectangle()
+                .fill(Color.black)
+                .frame(height: 20)
+            // Chat input container with extended height and increased top padding for a larger container
             HStack(spacing: 8) {
                 TextEditor(text: $currentInput)
                     .font(UIStyles.bodyFont)
@@ -45,7 +49,7 @@ struct ChatView: View {
                 .clipShape(Circle())
             }
             .padding(.horizontal, UIStyles.globalHorizontalPadding)
-            .padding(.vertical, 8)
+            .padding(.vertical, 12)
             .padding(.bottom, 16)
             .background(Color(hex: "#313131"))
             .cornerRadius(UIStyles.chatInputContainerCornerRadius * 2)
