@@ -20,7 +20,7 @@ struct InsightsView: View {
                 .font(UIStyles.smallLabelFont)
                 .foregroundColor(UIStyles.textColor)
             
-            MoodChartView(entries: entries)
+            MoodChartView(entries: Array(entries))
                 .frame(height: 180)
             
             Spacer().frame(height: 20)

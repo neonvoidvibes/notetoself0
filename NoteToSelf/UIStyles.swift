@@ -35,6 +35,7 @@ struct UIStyles {
     static let bodyFont = Font.custom("Menlo", size: 16)
     static let smallLabelFont = Font.custom("Menlo", size: 14)
     static let tinyHeadlineFont = Font.custom("Menlo", size: 12)
+    static let streakHeadlineFont = Font.custom("Menlo", size: 28)
     
     // MARK: - Custom Containers
     
