@@ -42,9 +42,9 @@ struct ChatView: View {
                 }) {
                     Image(systemName: "arrow.up")
                         .font(Font.system(size: 26, weight: .bold))
-                        .foregroundColor(Color(hex: "#555555"))
+                        .foregroundColor(Color(hex: "#000000"))
                 }
-                .frame(width: 38, height: 38)
+                .frame(width: 40, height: 40)
                 .background(Color.white)
                 .clipShape(Circle())
             }
