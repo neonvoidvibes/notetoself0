@@ -6,29 +6,21 @@ struct NewEntryView: View {
     
     var body: some View {
         ZStack {
-            // Fully transparent background with heavy blur to reveal underlying elements
+            // Fully transparent background with a real, native blur effect
             Color.clear
                 .edgesIgnoringSafeArea(.all)
                 .overlay(
-                    BlurView(style: .systemMaterialDark)
+                    BlurView(style: .dark)
                         .edgesIgnoringSafeArea(.all)
-                        .blur(radius: 20)
                 )
             
             VStack(alignment: .leading, spacing: 20) {
                 // Top section with Cancel button and "Add Note" title
                 VStack(alignment: .leading, spacing: 8) {
-                    Button(action: {
+                    Button("Cancel", action: {
                         dismiss()
-                    }) {
-                        Text("Cancel")
-                            .font(.headline)
-                            .foregroundColor(.black)
-                            .padding(.horizontal, 12)
-                            .padding(.vertical, 8)
-                            .background(Color.white)
-                            .cornerRadius(8)
-                    }
+                    })
+                    .buttonStyle(UIStyles.PrimaryButtonStyle())
                     
                     HStack {
                         Spacer()
@@ -56,17 +48,10 @@ struct NewEntryView: View {
                 // Save button aligned to the right below the input area
                 HStack {
                     Spacer()
-                    Button(action: {
+                    Button("Save", action: {
                         // Save action implementation
-                    }) {
-                        Text("Save")
-                            .font(.headline)
-                            .foregroundColor(.black)
-                            .padding(.horizontal, 20)
-                            .padding(.vertical, 12)
-                            .background(Color.white)
-                            .cornerRadius(8)
-                    }
+                    })
+                    .buttonStyle(UIStyles.PrimaryButtonStyle())
                 }
                 .padding(.horizontal)
                 
