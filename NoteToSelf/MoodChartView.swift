@@ -54,7 +54,7 @@ struct MoodChartView: View {
             ZStack {
                 // Draw the horizontal offWhite line, extending from (extraLeft - leftExtension) to last dot.
                 Rectangle()
-                    .fill(UIStyles.offWhite)
+                    .fill(UIStyles.secondaryAccentColor)
                     .frame(width: lineWidth, height: lineThickness)
                     .position(x: (extraLeft - leftExtension) + lineWidth/2, y: 50)
                 
@@ -98,7 +98,7 @@ struct MoodChartView: View {
                 Circle()
                     .fill(UIStyles.appBackground)
                     .overlay(
-                        Circle().stroke(UIStyles.offWhite, lineWidth: 4)
+                        Circle().stroke(UIStyles.secondaryAccentColor, lineWidth: 4)
                     )
                     .frame(width: dotDiameter, height: dotDiameter)
             )
