@@ -14,146 +14,148 @@ struct MainTabbedView: View {
     private let menuIconHorizontalPadding: CGFloat = UIStyles.globalHorizontalPadding
     
     var body: some View {
-        GeometryReader { geo in
-            ZStack {
-                // MAIN CONTENT
+        ZStack {
+            // Enforce full black background to avoid white flashes
+            UIStyles.appBackground.ignoresSafeArea()
+            
+            GeometryReader { geo in
                 ZStack {
-                    VStack(spacing: 0) {
-                        // TOP BAR
-                        HStack {
-                            // Left menu icon
-                            if !showMainMenu {
-                                AnimatedMenuIcon(isOpen: showMainMenu)
-                                    .matchedGeometryEffect(id: "leftMenuIcon", in: menuIconNamespace)
-                                    .onTapGesture {
-                                        withAnimation(.easeInOut) {
-                                            if showSettingsMenu { showSettingsMenu = false }
-                                            showMainMenu.toggle()
-                                        }
-                                    }
-                                    .padding(20)
-                            }
-                            
-                            Spacer()
-                            
-                            // Right settings icon
-                            if !showSettingsMenu {
-                                AnimatedSettingsIcon(isOpen: showSettingsMenu)
-                                    .matchedGeometryEffect(id: "rightSettingsIcon", in: menuIconNamespace)
-                                    .onTapGesture {
-                                        withAnimation(.easeInOut) {
-                                            if showMainMenu { showMainMenu = false }
-                                            showSettingsMenu.toggle()
-                                        }
-                                    }
-                                    .padding(20)
-                            }
-                        }
-                        // Use UIStyles.topSpacing and bottom the same
-                        .padding(.top, UIStyles.topSpacing)
-                        .padding(.bottom, UIStyles.topSpacing)
-                        .padding(.horizontal, 16)
-                        
-                        // TAB BAR
-                        TabBarView(selectedTab: $selectedTab)
-                            .frame(height: 50)
-                        
-                        // SELECTED CONTENT
-                        ZStack {
-                            switch selectedTab {
-                            case .overview:
-                                OverviewView()
-                            case .notes:
-                                NotesView()
-                            case .insights:
-                                InsightsView()
-                            case .chat:
-                                ChatView()
-                            }
-                        }
-                        .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    }
-                    // Guarantee full black background
-                    .background(UIStyles.appBackground.ignoresSafeArea())
-                    .cornerRadius((showMainMenu || showSettingsMenu) ? 20 : 0)
-                }
-                // Offset main content by 60% for a 20% overlay difference
-                .offset(x: showMainMenu ? geo.size.width * 0.6 :
-                        (showSettingsMenu ? -geo.size.width * 0.6 : 0))
-                .animation(.easeInOut, value: showMainMenu || showSettingsMenu)
-                .edgesIgnoringSafeArea(.all)
-                
-                // BLACK OVERLAY for tap-outside
-                if showMainMenu || showSettingsMenu {
-                    Color.black
-                        .opacity(0.4) // visible overlay
-                        .ignoresSafeArea()
-                        .onTapGesture {
-                            withAnimation(.easeInOut) {
-                                showMainMenu = false
-                                showSettingsMenu = false
-                            }
-                        }
-                }
-                
-                // LEFT SIDE MENU
-                if showMainMenu {
-                    // Put the left menu above main content so it overlays
-                    HStack(spacing: 0) {
-                        VStack {
+                    // MAIN CONTENT
+                    ZStack {
+                        VStack(spacing: 0) {
+                            // TOP BAR
                             HStack {
+                                // Left menu icon
+                                if !showMainMenu {
+                                    AnimatedMenuIcon(isOpen: showMainMenu)
+                                        .matchedGeometryEffect(id: "leftMenuIcon", in: menuIconNamespace)
+                                        .onTapGesture {
+                                            withAnimation(.easeInOut) {
+                                                if showSettingsMenu { showSettingsMenu = false }
+                                                showMainMenu.toggle()
+                                            }
+                                        }
+                                        .padding(20)
+                                }
+                                
                                 Spacer()
-                                // Right-adjusted icon inside the left menu
-                                AnimatedMenuIcon(isOpen: showMainMenu)
-                                    .matchedGeometryEffect(id: "leftMenuIcon", in: menuIconNamespace)
-                                    .onTapGesture {
-                                        withAnimation(.easeInOut) {
-                                            showMainMenu = false
+                                
+                                // Right settings icon
+                                if !showSettingsMenu {
+                                    AnimatedSettingsIcon(isOpen: showSettingsMenu)
+                                        .matchedGeometryEffect(id: "rightSettingsIcon", in: menuIconNamespace)
+                                        .onTapGesture {
+                                            withAnimation(.easeInOut) {
+                                                if showMainMenu { showMainMenu = false }
+                                                showSettingsMenu.toggle()
+                                            }
                                         }
-                                    }
-                                    .padding(.horizontal, menuIconHorizontalPadding)
+                                        .padding(20)
+                                }
                             }
-                            // Add vertical padding to match main top/bottom spacing
-                            .padding(.vertical, UIStyles.topSpacing)
-                            Spacer()
+                            // Use UIStyles.topSpacing for both top & bottom spacing
+                            .padding(.top, UIStyles.topSpacing)
+                            .padding(.bottom, UIStyles.topSpacing)
+                            .padding(.horizontal, 16)
+                            
+                            // TAB BAR
+                            TabBarView(selectedTab: $selectedTab)
+                                .frame(height: 50)
+                            
+                            // SELECTED CONTENT
+                            ZStack {
+                                switch selectedTab {
+                                case .overview:
+                                    OverviewView()
+                                case .notes:
+                                    NotesView()
+                                case .insights:
+                                    InsightsView()
+                                case .chat:
+                                    ChatView()
+                                }
+                            }
+                            .frame(maxWidth: .infinity, maxHeight: .infinity)
                         }
-                        // Left menu is 80% wide
-                        .frame(width: geo.size.width * 0.8)
-                        .background(UIStyles.secondaryBackground)
-                        .transition(.move(edge: .leading))
-                        
-                        Spacer()
+                        // Guarantee full black background for main content
+                        .background(UIStyles.appBackground.ignoresSafeArea())
+                        .cornerRadius((showMainMenu || showSettingsMenu) ? 20 : 0)
                     }
+                    // Offset main content by 60% to create a 20% overlay effect
+                    .offset(x: showMainMenu ? geo.size.width * 0.6 :
+                            (showSettingsMenu ? -geo.size.width * 0.6 : 0))
+                    .animation(.easeInOut, value: showMainMenu || showSettingsMenu)
                     .edgesIgnoringSafeArea(.all)
-                }
-                
-                // RIGHT SIDE MENU
-                if showSettingsMenu {
-                    // Put the right menu above main content so it overlays
-                    HStack(spacing: 0) {
-                        Spacer()
-                        VStack {
-                            HStack {
-                                // Left-adjusted icon inside the right menu
-                                AnimatedSettingsIcon(isOpen: showSettingsMenu)
-                                    .matchedGeometryEffect(id: "rightSettingsIcon", in: menuIconNamespace)
-                                    .onTapGesture {
-                                        withAnimation(.easeInOut) {
-                                            showSettingsMenu = false
+                    
+                    // BLACK OVERLAY for tap-outside
+                    if showMainMenu || showSettingsMenu {
+                        Color.black
+                            .opacity(0.4) // visible overlay
+                            .ignoresSafeArea()
+                            .onTapGesture {
+                                withAnimation(.easeInOut) {
+                                    showMainMenu = false
+                                    showSettingsMenu = false
+                                }
+                            }
+                    }
+                    
+                    // LEFT SIDE MENU
+                    if showMainMenu {
+                        // Put the left menu above main content so it overlays
+                        HStack(spacing: 0) {
+                            VStack {
+                                HStack {
+                                    Spacer()
+                                    // Right-adjusted icon inside the left menu
+                                    AnimatedMenuIcon(isOpen: showMainMenu)
+                                        .matchedGeometryEffect(id: "leftMenuIcon", in: menuIconNamespace)
+                                        .onTapGesture {
+                                            withAnimation(.easeInOut) {
+                                                showMainMenu = false
+                                            }
                                         }
-                                    }
-                                    .padding(.horizontal, menuIconHorizontalPadding)
+                                        .padding(.horizontal, menuIconHorizontalPadding)
+                                }
+                                .padding(.vertical, UIStyles.topSpacing)
                                 Spacer()
                             }
-                            // Add vertical padding to match main top/bottom spacing
-                            .padding(.vertical, UIStyles.topSpacing)
+                            .frame(minWidth: geo.size.width * 0.8, maxWidth: geo.size.width * 0.8, minHeight: 0, maxHeight: .infinity, alignment: .top)
+                            .background(UIStyles.secondaryBackground.ignoresSafeArea())
+                            .transition(.move(edge: .leading))
+                            
                             Spacer()
                         }
-                        .frame(width: geo.size.width * 0.8)
-                        .background(UIStyles.secondaryBackground)
-                        .transition(.move(edge: .trailing))
+                        .edgesIgnoringSafeArea(.all)
                     }
-                    .edgesIgnoringSafeArea(.all)
+                    
+                    // RIGHT SIDE MENU
+                    if showSettingsMenu {
+                        // Put the right menu above main content so it overlays
+                        HStack(spacing: 0) {
+                            Spacer()
+                            VStack {
+                                HStack {
+                                    // Left-adjusted icon inside the right menu
+                                    AnimatedSettingsIcon(isOpen: showSettingsMenu)
+                                        .matchedGeometryEffect(id: "rightSettingsIcon", in: menuIconNamespace)
+                                        .onTapGesture {
+                                            withAnimation(.easeInOut) {
+                                                showSettingsMenu = false
+                                            }
+                                        }
+                                        .padding(.horizontal, menuIconHorizontalPadding)
+                                    Spacer()
+                                }
+                                .padding(.vertical, UIStyles.topSpacing)
+                                Spacer()
+                            }
+                            .frame(minWidth: geo.size.width * 0.8, maxWidth: geo.size.width * 0.8, minHeight: 0, maxHeight: .infinity, alignment: .top)
+                            .background(UIStyles.secondaryBackground.ignoresSafeArea())
+                            .transition(.move(edge: .trailing))
+                        }
+                        .edgesIgnoringSafeArea(.all)
+                    }
                 }
             }
         }
