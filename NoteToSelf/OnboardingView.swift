@@ -2,8 +2,8 @@ import SwiftUI
 
 struct OnboardingView: View {
     @Environment(\.managedObjectContext) private var moc
-    @AppStorage("didCompleteOnboarding") var didCompleteOnboarding: Bool = false
-    
+    @State private var showMainView: Bool = false
+
     var body: some View {
         UIStyles.CustomZStack {
             // A vertical stack for the onboarding text & button
@@ -19,8 +19,8 @@ struct OnboardingView: View {
                     .multilineTextAlignment(.center)
                 
                 Button(action: {
-                    // Mark onboarding done:
-                    didCompleteOnboarding = true
+                    // On tapping Get Started, present the main journal view
+                    showMainView = true
                 }) {
                     Text("Get Started")
                 }
@@ -29,5 +29,15 @@ struct OnboardingView: View {
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
         }
+        .fullScreenCover(isPresented: $showMainView) {
+            MainJournalView()
+                .environment(\.managedObjectContext, moc)
+        }
+    }
+}
+
+struct OnboardingView_Previews: PreviewProvider {
+    static var previews: some View {
+        OnboardingView()
     }
 }
