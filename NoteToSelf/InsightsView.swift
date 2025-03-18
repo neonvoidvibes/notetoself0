@@ -16,6 +16,10 @@ struct InsightsView: View {
             
             Spacer().frame(height: 20)
             
+            Text("Streak")
+                .font(UIStyles.smallLabelFont)
+                .foregroundColor(UIStyles.textColor)
+            
             MoodChartView(entries: entries)
                 .frame(height: 180)
             
