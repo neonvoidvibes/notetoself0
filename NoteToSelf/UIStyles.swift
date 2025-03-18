@@ -34,6 +34,8 @@ struct UIStyles {
     static let headingFontSize: CGFloat = 36
     static let bodyFont = Font.custom("Menlo", size: 16)
     static let smallLabelFont = Font.custom("Menlo", size: 14)
+    // New tiny headline font for intensity modal title
+    static let tinyHeadlineFont = Font.custom("Menlo", size: 12)
     
     // MARK: - Custom Containers
     
@@ -99,6 +101,23 @@ struct UIStyles {
         .buttonStyle(PrimaryButtonStyle())
     }
     
+    // New full-width Save button style with increased rounded corners
+    struct FullWidthSaveButtonStyle: ButtonStyle {
+        func makeBody(configuration: Configuration) -> some View {
+            configuration.label
+                .font(UIStyles.bodyFont)
+                .foregroundColor(Color.black)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 12)
+                .background(UIStyles.accentColor)
+                .cornerRadius(UIStyles.saveButtonCornerRadius)
+                .scaleEffect(configuration.isPressed ? 0.95 : 1.0)
+                .opacity(configuration.isPressed ? 0.8 : 1.0)
+        }
+    }
+    
+    static let saveButtonCornerRadius: CGFloat = 30
+    
     // MARK: - Card Container
     struct Card<Content: View>: View {
         let content: () -> Content
@@ -149,8 +168,6 @@ extension Color {
 // MARK: - Bottom Sheet Style Preset
 struct BottomSheetStyleModifier: ViewModifier {
     func body(content: Content) -> some View {
-        // For demonstration, a fixed height + large.
-        // In real usage, adjust as desired or use .presentationDetents([.medium]) etc.
         content
             .presentationDetents([.height(420), .large])
             .presentationCornerRadius(30)
@@ -161,5 +178,19 @@ struct BottomSheetStyleModifier: ViewModifier {
 extension View {
     func applyBottomSheetStyle() -> some View {
         modifier(BottomSheetStyleModifier())
+    }
+}
+
+// MARK: - String Extensions for Mood Parsing
+extension String {
+    func baseMood() -> String {
+        return self.components(separatedBy: "|").first ?? self
+    }
+    
+    func moodOpacity() -> CGFloat {
+        if let part = self.components(separatedBy: "|").last, let value = Double(part) {
+            return CGFloat(value)
+        }
+        return 1.0
     }
 }

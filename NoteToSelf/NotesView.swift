@@ -31,8 +31,8 @@ struct NotesView: View {
                         }
                     } label: {
                         Image(systemName: "square.and.pencil")
-                            .font(.system(size: 20))
-                            .foregroundColor(UIStyles.secondaryAccentColor)
+                            .font(.system(size: 28))
+                            .foregroundColor(UIStyles.offWhite)
                     }
                 }
                 

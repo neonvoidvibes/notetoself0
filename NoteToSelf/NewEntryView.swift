@@ -1,26 +1,20 @@
 import SwiftUI
 
 struct NewEntryView: View {
-    // Bindings from parent so text + mood persist if user cancels (sheet is dismissed)
     @Binding var noteText: String
     @Binding var selectedMood: String
-    
-    // Closure to perform save action
     var onSave: () -> Void
     
     @Environment(\.dismiss) private var dismiss
     
-    // For presenting mood selector overlay
     @State private var showMoodSelector = false
     
     var body: some View {
         ZStack(alignment: .topTrailing) {
-            // Background color (no blur/transparency)
             UIStyles.secondaryBackground
                 .ignoresSafeArea()
             
             VStack(spacing: 16) {
-                // Top bar with an "x" icon inside a round button (semi-transparent)
                 HStack {
                     Spacer()
                     Button(action: {
@@ -30,19 +24,15 @@ struct NewEntryView: View {
                             .font(.system(size: 18, weight: .bold))
                             .foregroundColor(.white)
                             .padding()
-                            .background(Color.white.opacity(0.2))
-                            .clipShape(Circle())
                     }
                     .padding(.trailing, 16)
                 }
                 .padding(.top, 16)
                 
-                // Title
                 Text("Add Note")
                     .font(UIStyles.headingFont)
                     .foregroundColor(.white)
                 
-                // Input editor with background color set to #000000
                 TextEditor(text: $noteText)
                     .font(UIStyles.bodyFont)
                     .foregroundColor(.white)
@@ -53,10 +43,9 @@ struct NewEntryView: View {
                     .scrollContentBackground(.hidden)
                     .padding(.horizontal, 16)
                 
-                // Mood picker row
                 HStack(spacing: 8) {
                     Circle()
-                        .fill(UIStyles.moodColors[selectedMood] ?? Color.gray)
+                        .fill(UIStyles.moodColors[selectedMood.baseMood()]?.opacity(selectedMood.moodOpacity()) ?? Color.gray)
                         .frame(width: 28, height: 28)
                         .onTapGesture {
                             showMoodSelector = true
@@ -75,22 +64,17 @@ struct NewEntryView: View {
                 
                 Spacer()
                 
-                // Bottom Save button
-                HStack {
-                    Spacer()
-                    Button(action: {
-                        onSave()
-                        dismiss()
-                    }) {
-                        Text("Save")
-                    }
-                    .buttonStyle(UIStyles.PrimaryButtonStyle())
-                    .padding(.trailing, 16)
+                Button(action: {
+                    onSave()
+                    dismiss()
+                }) {
+                    Text("Save")
                 }
+                .buttonStyle(UIStyles.FullWidthSaveButtonStyle())
+                .padding(.horizontal, 16)
                 .padding(.bottom, 16)
             }
         }
-        // Present MoodSelectorView as an overlay
         .overlay(
             Group {
                 if showMoodSelector {
@@ -116,7 +100,6 @@ struct NewEntryView_Previews: PreviewProvider {
     }
 }
 
-// Helper for SwiftUI previews to bind to local states
 struct StatefulPreviewWrapper<Value1, Value2, Content: View>: View {
     @State var value1: Value1
     @State var value2: Value2
