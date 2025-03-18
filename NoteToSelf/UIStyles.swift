@@ -24,6 +24,13 @@ struct UIStyles {
         "Excited": Color.orange
     ]
     
+    // MARK: - Chat UI Colors and Styles
+    static let chatBackground = Color(hex: "#000000")
+    static let chatSendButtonBackground = Color(hex: "#007AFF")
+    static let assistantBubbleColor = Color.gray.opacity(0.2)
+    static let userBubbleColor = Color.blue.opacity(0.8)
+    static let chatFont = Font.custom("Menlo", size: 16)
+    
     // MARK: - Layout Constants
     static let globalHorizontalPadding: CGFloat = 20
     static let globalVerticalPadding: CGFloat = 16
