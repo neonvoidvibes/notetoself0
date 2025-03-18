@@ -6,9 +6,7 @@ struct OnboardingView: View {
 
     var body: some View {
         UIStyles.CustomZStack {
-            // A vertical stack for the onboarding text & button
             UIStyles.CustomVStack(alignment: .center, spacing: 24) {
-                
                 Text("Note to Self")
                     .font(UIStyles.headingFont)
                     .foregroundColor(UIStyles.textColor)
@@ -19,7 +17,6 @@ struct OnboardingView: View {
                     .multilineTextAlignment(.center)
                 
                 Button(action: {
-                    // On tapping Get Started, present the main journal view
                     showMainView = true
                 }) {
                     Text("Get Started")
@@ -30,7 +27,7 @@ struct OnboardingView: View {
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
         }
         .fullScreenCover(isPresented: $showMainView) {
-            MainJournalView()
+            MainTabbedView()
                 .environment(\.managedObjectContext, moc)
         }
     }

@@ -4,7 +4,8 @@ struct UIStyles {
     // MARK: - Colors
     static let appBackground = Color(hex: "#000000")
     static let cardBackground = Color("CardBackground") // defined in Assets
-    static let accentColor = Color.white
+    static let accentColor = Color(hex: "#FFFF00")
+    static let secondaryAccentColor = Color(hex: "#989898")
     static let textColor = Color("TextColor")
     static let offWhite = Color(red: 0.95, green: 0.95, blue: 0.95)
     static let entryBackground = Color(hex: "#0A0A0A")
