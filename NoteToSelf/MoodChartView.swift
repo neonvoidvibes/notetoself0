@@ -3,17 +3,17 @@ import SwiftUI
 struct MoodChartView: View {
     var entries: FetchedResults<JournalEntryEntity>
     
-    // Group entries by day using start of day as key
+    // Group entries by day using start of day as key.
     var groupedEntries: [Date: [JournalEntryEntity]] {
         Dictionary(grouping: entries, by: { Calendar.current.startOfDay(for: $0.timestamp ?? Date()) })
     }
     
-    // Sorted list of days
+    // Sorted list of days.
     var sortedDays: [Date] {
         groupedEntries.keys.sorted()
     }
     
-    // Map mood to positivity value (0.0 to 1.0)
+    // Map mood to positivity value (0.0 to 1.0).
     func positivity(for mood: String) -> Double {
         switch mood {
         case "Happy": return 1.0
@@ -28,7 +28,7 @@ struct MoodChartView: View {
     var body: some View {
         GeometryReader { geo in
             ZStack {
-                // Draw dotted white trend line
+                // Draw dotted white trend line.
                 Path { path in
                     var points: [CGPoint] = []
                     for day in sortedDays {
@@ -50,7 +50,7 @@ struct MoodChartView: View {
                 }
                 .stroke(Color.white, style: StrokeStyle(lineWidth: 2, dash: [5, 3]))
                 
-                // Draw dots for each entry on each day without any tap functionality
+                // Draw dots for each entry on each day arranged in a polygonal formation.
                 ForEach(sortedDays, id: \.self) { day in
                     if let dayEntries = groupedEntries[day] {
                         let count = dayEntries.count
@@ -59,12 +59,25 @@ struct MoodChartView: View {
                             .map { positivity(for: $0) }
                             .reduce(0, +) / Double(count)
                         let baseY = yPosition(for: avgPos, in: geo.size.height)
-                        ForEach(0..<count, id: \.self) { index in
-                            let offset = CGFloat(index - count/2) * 6.0
+                        
+                        // For count==1, place at center; else, arrange on a circle.
+                        if count == 1 {
                             Circle()
-                                .fill(UIStyles.moodColors[dayEntries[index].mood ?? "Neutral"] ?? Color.gray)
+                                .fill(UIStyles.moodColors[dayEntries.first?.mood ?? "Neutral"] ?? Color.gray)
                                 .frame(width: 12, height: 12)
-                                .position(x: xCenter, y: baseY + offset)
+                                .position(x: xCenter, y: baseY)
+                        } else {
+                            ForEach(0..<count, id: \.self) { index in
+                                let angle = 2 * Double.pi * Double(index) / Double(count) - Double.pi / 2
+                                let radius: CGFloat = 10
+                                let dx = CGFloat(cos(angle)) * radius
+                                let dy = CGFloat(sin(angle)) * radius
+                                
+                                Circle()
+                                    .fill(UIStyles.moodColors[dayEntries[index].mood ?? "Neutral"] ?? Color.gray)
+                                    .frame(width: 12, height: 12)
+                                    .position(x: xCenter + dx, y: baseY + dy)
+                            }
                         }
                     }
                 }
@@ -82,7 +95,7 @@ struct MoodChartView: View {
         return CGFloat(current / total) * width
     }
     
-    // Map a positivity value to a y position (inverted so higher positivity is higher up)
+    // Map a positivity value to a y position (inverted so higher positivity is higher up).
     func yPosition(for positivity: Double, in height: CGFloat) -> CGFloat {
         return CGFloat((1.0 - positivity)) * height
     }

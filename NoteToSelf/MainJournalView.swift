@@ -8,28 +8,31 @@ struct MainJournalView: View {
         animation: .default
     ) private var entries: FetchedResults<JournalEntryEntity>
     
-    // Use single expanded entry ID
+    // Only one accordion entry expanded at a time.
     @State private var expandedEntry: NSManagedObjectID? = nil
-    // State for showing insights toggle (and new row entry)
+    // State for showing insights toggle
     @State private var showInsights = false
-    // State for inline new entry row
-    @State private var isAddingEntry = false
+    // State to show the new entry sheet modal
+    @State private var showNewEntrySheet = false
     
     var body: some View {
         UIStyles.CustomZStack {
             VStack(alignment: .leading, spacing: 20) {
-                Spacer().frame(height: UIStyles.headingFontSize)
+                // Reduced top spacing
+                Spacer().frame(height: 20)
+                
+                // Main title with reduced bottom spacing
                 Text("Note to Self")
                     .font(UIStyles.headingFont)
                     .foregroundColor(UIStyles.textColor)
-                    .padding(.bottom, UIStyles.headingFontSize)
+                    .padding(.bottom, 20)
                 
-                // "+ Add" button: when tapped, show new entry row inline at the top
+                // "+ Add" button: when tapped, present the new entry sheet modally.
                 HStack {
                     Spacer()
                     Button {
                         withAnimation {
-                            isAddingEntry = true
+                            showNewEntrySheet = true
                         }
                     } label: {
                         Text("+ Add")
@@ -42,13 +45,10 @@ struct MainJournalView: View {
                     }
                 }
                 
+                // The list of entries in a scroll view.
                 ScrollViewReader { proxy in
                     ScrollView {
                         LazyVStack(spacing: 12) {
-                            if isAddingEntry {
-                                NewEntryRow(isPresented: $isAddingEntry)
-                                    .id("newEntry")
-                            }
                             ForEach(entries) { entry in
                                 EntryAccordionView(entry: entry, isExpanded: expandedEntry == entry.objectID)
                                     .id(entry.objectID)
@@ -65,9 +65,12 @@ struct MainJournalView: View {
                                     }
                             }
                         }
-                        .padding(.bottom, 20) // extra space between entries and chart area
+                        .padding(.bottom, 20) // Extra space between entries and chart area
                     }
                 }
+                
+                // Add extra space above the chart header.
+                Spacer().frame(height: 30)
                 
                 // Chart header: "Notes", "Insights", and "Streak"
                 HStack(spacing: 20) {
@@ -85,9 +88,9 @@ struct MainJournalView: View {
                         .font(.custom("Menlo", size: 20))
                         .foregroundColor(Color.gray)
                 }
-                .padding(.leading, UIStyles.globalHorizontalPadding)
+                .padding(.leading, UIStyles.globalHorizontalPadding) // Aligned with other elements
                 
-                // Chart area: reduce height to 180
+                // Chart area (height reduced to 180)
                 if showInsights {
                     VStack {
                         Text("Insights coming soon")
@@ -104,6 +107,10 @@ struct MainJournalView: View {
                 Spacer()
             }
         }
+        // Present the new entry sheet modally (using default iOS sheet style)
+        .sheet(isPresented: $showNewEntrySheet) {
+            NewEntrySheet()
+        }
     }
 }
 
@@ -113,7 +120,7 @@ struct EntryAccordionView: View {
     
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
-            // Primary row remains fixed
+            // Primary row remains fixed.
             HStack {
                 if let text = entry.text, !text.isEmpty {
                     Text(text)
@@ -130,7 +137,7 @@ struct EntryAccordionView: View {
                 }
             }
             if isExpanded, let text = entry.text, !text.isEmpty {
-                // Expanded content: full text inside a scroll view with max height
+                // Expanded content: full text in a scroll view with a max height.
                 ScrollView {
                     Text(text)
                         .font(UIStyles.bodyFont)
