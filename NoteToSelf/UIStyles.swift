@@ -2,15 +2,15 @@ import SwiftUI
 
 struct UIStyles {
     // MARK: - Colors
-    static let appBackground = Color(hex: "#000000")
-    static let cardBackground = Color("CardBackground") // defined in Assets
+    static let appBackground = Color(hex: "#000000")   // Full black background
+    static let cardBackground = Color("CardBackground")
     static let accentColor = Color(hex: "#FFFF00")
     static let secondaryAccentColor = Color(hex: "#989898")
     static let textColor = Color("TextColor")
     static let offWhite = Color(red: 0.95, green: 0.95, blue: 0.95)
     static let entryBackground = Color(hex: "#0A0A0A")
     
-    // Added per request
+    // Secondary background as needed
     static let secondaryBackground = Color(hex: "#111111")
     
     // Proper colors for moods
@@ -25,11 +25,12 @@ struct UIStyles {
     // MARK: - Layout Constants
     static let globalHorizontalPadding: CGFloat = 20
     static let globalVerticalPadding: CGFloat = 16
-    static let defaultCornerRadius: CGFloat = 12  // Globally defined rounded corner radius
+    static let defaultCornerRadius: CGFloat = 12
+    static let topSpacing: CGFloat = 60  // enforce consistent top spacing
     
-    // MARK: - Typography (Using "Menlo" uniformly)
-    static let headingFont = Font.custom("Menlo", size: 48) // Increased headline size
-    static let headingFontSize: CGFloat = 48   // Used for spacing calculations
+    // MARK: - Typography
+    static let headingFont = Font.custom("Menlo", size: 48)
+    static let headingFontSize: CGFloat = 48
     static let bodyFont = Font.custom("Menlo", size: 16)
     static let smallLabelFont = Font.custom("Menlo", size: 14)
     
@@ -42,7 +43,7 @@ struct UIStyles {
         }
         var body: some View {
             ZStack(alignment: .topLeading) {
-                appBackground.edgesIgnoringSafeArea(.all)
+                appBackground.ignoresSafeArea()
                 content()
                     .padding(.horizontal, globalHorizontalPadding)
                     .padding(.vertical, globalVerticalPadding)
@@ -104,7 +105,7 @@ struct UIStyles {
             }
             .padding()
             .background(cardBackground)
-            .cornerRadius(UIStyles.defaultCornerRadius)
+            .cornerRadius(defaultCornerRadius)
             .shadow(color: .black.opacity(0.15), radius: 4, x: 0, y: 2)
         }
     }
