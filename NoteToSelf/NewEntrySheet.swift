@@ -10,14 +10,26 @@ struct NewEntrySheet: View {
     let moodOptions = ["Happy", "Neutral", "Sad", "Stressed", "Excited"]
     
     var body: some View {
-        // Using an overlay card style with background blur
         ZStack {
+            // Dimmed background
             Color.black.opacity(0.4).edgesIgnoringSafeArea(.all)
+            // Overlay card with blur and shadow
             VStack(alignment: .leading, spacing: 16) {
+                // Cancel button at the top
+                HStack {
+                    Button("Cancel") {
+                        dismiss()
+                    }
+                    .font(UIStyles.bodyFont)
+                    .foregroundColor(UIStyles.accentColor)
+                    Spacer()
+                }
+                // Title
                 Text("Add Note")
                     .font(UIStyles.headingFont)
                     .foregroundColor(UIStyles.textColor)
-                    .padding(.bottom, UIStyles.headingFontSize) // Extra padding using defined constant
+                    .padding(.bottom, UIStyles.headingFontSize / 2)
+                
                 // Mood picker
                 ScrollView(.horizontal, showsIndicators: false) {
                     HStack(spacing: 12) {
@@ -35,14 +47,14 @@ struct NewEntrySheet: View {
                         }
                     }
                 }
-                // TextEditor with placeholder
+                // TextEditor with placeholder for note submission
                 ZStack(alignment: .topLeading) {
                     TextEditor(text: $text)
                         .font(UIStyles.bodyFont)
                         .foregroundColor(Color.white)
                         .frame(height: 120)
                         .padding(8)
-                        .background(UIStyles.entryBackground)
+                        .background(Color(hex: "#111111"))
                         .cornerRadius(UIStyles.defaultCornerRadius)
                     if text.isEmpty {
                         Text("Write a short note...")
@@ -52,7 +64,7 @@ struct NewEntrySheet: View {
                             .padding(.vertical, 12)
                     }
                 }
-                Spacer()
+                // Save button aligned to the right
                 HStack {
                     Spacer()
                     Button("Save") {
@@ -63,9 +75,13 @@ struct NewEntrySheet: View {
                 }
             }
             .padding()
-            .background(Color.white.opacity(0.05))
+            // Use ultra thin material for blur effect and add shadow
+            .background(.ultraThinMaterial)
             .cornerRadius(UIStyles.defaultCornerRadius)
-            .padding(.horizontal, 40)
+            .shadow(color: Color.black.opacity(0.5), radius: 10, x: 0, y: 5)
+            // Expanded width and reduced vertical padding
+            .padding(.horizontal, 20)
+            .frame(maxHeight: 300)
         }
     }
     

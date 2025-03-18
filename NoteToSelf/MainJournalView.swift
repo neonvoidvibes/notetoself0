@@ -8,29 +8,29 @@ struct MainJournalView: View {
         animation: .default
     ) private var entries: FetchedResults<JournalEntryEntity>
     
-    @State private var showNewEntry = false
-    @State private var showInsights = false  // Toggle for chart view
-    @State private var expandedEntries: Set<NSManagedObjectID> = []
+    // Use single expanded entry ID
+    @State private var expandedEntry: NSManagedObjectID? = nil
+    // State for showing insights toggle (and new row entry)
+    @State private var showInsights = false
+    // State for inline new entry row
+    @State private var isAddingEntry = false
     
     var body: some View {
         UIStyles.CustomZStack {
             VStack(alignment: .leading, spacing: 20) {
-                // Extra padding above title using a real number constant from UIStyles
                 Spacer().frame(height: UIStyles.headingFontSize)
-                // Header: Title ("Note to Self")
                 Text("Note to Self")
-                    .font(.system(size: 36, weight: .heavy, design: .rounded))
+                    .font(UIStyles.headingFont)
                     .foregroundColor(UIStyles.textColor)
                     .padding(.bottom, UIStyles.headingFontSize)
                 
-                // Daily Streak Info
-                DailyStreakView(entries: entries)
-                
-                // "+ Add" button overlay placed above the latest entry, right-aligned
+                // "+ Add" button: when tapped, show new entry row inline at the top
                 HStack {
                     Spacer()
                     Button {
-                        showNewEntry.toggle()
+                        withAnimation {
+                            isAddingEntry = true
+                        }
                     } label: {
                         Text("+ Add")
                             .font(UIStyles.bodyFont)
@@ -41,43 +41,53 @@ struct MainJournalView: View {
                             .cornerRadius(UIStyles.defaultCornerRadius)
                     }
                 }
-                .padding(.trailing, UIStyles.globalHorizontalPadding)
                 
-                // Timeline: Full-width entries as accordion in a LazyVStack
-                ScrollView {
-                    LazyVStack(spacing: 12) {
-                        ForEach(entries) { entry in
-                            EntryAccordionView(entry: entry, isExpanded: expandedEntries.contains(entry.objectID))
-                                .onTapGesture {
-                                    withAnimation {
-                                        if expandedEntries.contains(entry.objectID) {
-                                            expandedEntries.remove(entry.objectID)
-                                        } else {
-                                            expandedEntries.insert(entry.objectID)
+                ScrollViewReader { proxy in
+                    ScrollView {
+                        LazyVStack(spacing: 12) {
+                            if isAddingEntry {
+                                NewEntryRow(isPresented: $isAddingEntry)
+                                    .id("newEntry")
+                            }
+                            ForEach(entries) { entry in
+                                EntryAccordionView(entry: entry, isExpanded: expandedEntry == entry.objectID)
+                                    .id(entry.objectID)
+                                    .onTapGesture {
+                                        withAnimation {
+                                            if expandedEntry == entry.objectID {
+                                                expandedEntry = nil
+                                            } else {
+                                                expandedEntry = entry.objectID
+                                                // Scroll the expanded entry into view
+                                                proxy.scrollTo(entry.objectID, anchor: .bottom)
+                                            }
                                         }
                                     }
-                                }
+                            }
                         }
+                        .padding(.bottom, 20) // extra space between entries and chart area
                     }
-                    .padding(.top, 8)
                 }
                 
-                // Chart header: "Notes" and "Insights" left-adjusted with larger font
+                // Chart header: "Notes", "Insights", and "Streak"
                 HStack(spacing: 20) {
                     Button(action: { showInsights = false }) {
                         Text("Notes")
-                            .font(.system(size: 24, weight: .bold, design: .rounded))
+                            .font(.custom("Menlo", size: 20))
                             .foregroundColor(showInsights ? Color.gray : UIStyles.accentColor)
                     }
                     Button(action: { showInsights = true }) {
                         Text("Insights")
-                            .font(.system(size: 24, weight: .bold, design: .rounded))
+                            .font(.custom("Menlo", size: 20))
                             .foregroundColor(showInsights ? UIStyles.accentColor : Color.gray)
                     }
+                    Text("Streak")
+                        .font(.custom("Menlo", size: 20))
+                        .foregroundColor(Color.gray)
                 }
                 .padding(.leading, UIStyles.globalHorizontalPadding)
                 
-                // Chart area: Swap between MoodChartView and Insights placeholder
+                // Chart area: reduce height to 180
                 if showInsights {
                     VStack {
                         Text("Insights coming soon")
@@ -85,23 +95,14 @@ struct MainJournalView: View {
                             .foregroundColor(UIStyles.textColor)
                         Spacer()
                     }
-                    .frame(height: 200)
+                    .frame(height: 180)
                 } else {
                     MoodChartView(entries: entries)
-                        .frame(height: 200)
+                        .frame(height: 180)
                 }
                 
                 Spacer()
             }
-            // Present NewEntrySheet as an overlay card instead of full screen
-            .overlay(
-                Group {
-                    if showNewEntry {
-                        NewEntrySheet()
-                            .transition(.scale)
-                    }
-                }
-            )
         }
     }
 }
@@ -112,32 +113,37 @@ struct EntryAccordionView: View {
     
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
-            if isExpanded {
-                if let text = entry.text {
+            // Primary row remains fixed
+            HStack {
+                if let text = entry.text, !text.isEmpty {
                     Text(text)
                         .font(UIStyles.bodyFont)
                         .foregroundColor(.white)
+                        .lineLimit(1)
                 }
+                Spacer()
+                if let mood = entry.mood, !mood.isEmpty,
+                   let moodColor = UIStyles.moodColors[mood] {
+                    Circle()
+                        .fill(moodColor)
+                        .frame(width: 12, height: 12)
+                }
+            }
+            if isExpanded, let text = entry.text, !text.isEmpty {
+                // Expanded content: full text inside a scroll view with max height
+                ScrollView {
+                    Text(text)
+                        .font(UIStyles.bodyFont)
+                        .foregroundColor(.white)
+                        .padding(.bottom, 4)
+                }
+                .frame(maxHeight: 150)
+                
                 if let timestamp = entry.timestamp {
                     Text(timestamp, style: .date)
                         .font(UIStyles.smallLabelFont)
                         .foregroundColor(.white)
-                }
-            } else {
-                HStack {
-                    if let text = entry.text, !text.isEmpty {
-                        Text(text)
-                            .font(UIStyles.bodyFont)
-                            .foregroundColor(.white)
-                            .lineLimit(1)
-                    }
-                    Spacer()
-                    if let mood = entry.mood, !mood.isEmpty,
-                       let moodColor = UIStyles.moodColors[mood] {
-                        Circle()
-                            .fill(moodColor)
-                            .frame(width: 12, height: 12)
-                    }
+                        .padding(.top, 4)
                 }
             }
         }
@@ -146,42 +152,5 @@ struct EntryAccordionView: View {
         .background(isExpanded ? Color(hex: "#111111") : UIStyles.entryBackground)
         .cornerRadius(UIStyles.defaultCornerRadius)
         .animation(.easeInOut, value: isExpanded)
-    }
-}
-
-struct DailyStreakView: View {
-    let entries: FetchedResults<JournalEntryEntity>
-    
-    var body: some View {
-        let streakCount = calculateStreak()
-        return HStack {
-            Text("Current Streak: \(streakCount) day\(streakCount == 1 ? "" : "s")")
-                .font(UIStyles.bodyFont)
-                .foregroundColor(UIStyles.textColor)
-        }
-    }
-    
-    func calculateStreak() -> Int {
-        let sorted = entries.sorted { $0.timestamp ?? Date() > $1.timestamp ?? Date() }
-        guard !sorted.isEmpty else { return 0 }
-        var streak = 1
-        var previousDate = Calendar.current.startOfDay(for: sorted[0].timestamp ?? Date())
-        for i in 1..<sorted.count {
-            let currentDate = Calendar.current.startOfDay(for: sorted[i].timestamp ?? Date())
-            let diff = Calendar.current.dateComponents([.day], from: currentDate, to: previousDate).day ?? 0
-            if diff == 1 {
-                streak += 1
-                previousDate = currentDate
-            } else if diff > 1 {
-                break
-            }
-        }
-        return streak
-    }
-}
-
-struct MainJournalView_Previews: PreviewProvider {
-    static var previews: some View {
-        MainJournalView()
     }
 }
