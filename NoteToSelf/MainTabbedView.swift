@@ -25,7 +25,7 @@ struct MainTabbedView: View {
                         VStack(spacing: 0) {
                             // TOP BAR
                             HStack {
-                                // Always render the left menu icon with opacity adjusted based on state.
+                                // Always show left menu icon (now without opacity modifier).
                                 AnimatedMenuIcon(isOpen: showMainMenu)
                                     .matchedGeometryEffect(id: "leftMenuIcon", in: menuIconNamespace)
                                     .onTapGesture {
@@ -35,11 +35,10 @@ struct MainTabbedView: View {
                                         }
                                     }
                                     .padding(.horizontal, menuIconHorizontalPadding)
-                                    .opacity(showMainMenu ? 0 : 1)
                                 
                                 Spacer()
                                 
-                                // Always render the right settings icon with opacity adjusted based on state.
+                                // Always show right settings icon (now without opacity modifier).
                                 AnimatedSettingsIcon(isOpen: showSettingsMenu)
                                     .matchedGeometryEffect(id: "rightSettingsIcon", in: menuIconNamespace)
                                     .onTapGesture {
@@ -49,7 +48,6 @@ struct MainTabbedView: View {
                                         }
                                     }
                                     .padding(.horizontal, menuIconHorizontalPadding)
-                                    .opacity(showSettingsMenu ? 0 : 1)
                             }
                             .padding(.top, UIStyles.topSpacing)
                             .padding(.bottom, 10)
