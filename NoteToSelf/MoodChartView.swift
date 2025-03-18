@@ -94,6 +94,9 @@ struct MoodChartView: View {
             return AnyView(
                 Circle()
                     .fill(moodColor)
+                    .overlay(
+                        Circle().stroke(moodColor, lineWidth: 4)
+                    )
                     .frame(width: dotDiameter, height: dotDiameter)
             )
         } else {
