@@ -8,65 +8,70 @@ struct OverviewView: View {
     var body: some View {
         UIStyles.CustomZStack {
             VStack(alignment: .leading, spacing: 24) {
-                // Header with month title and navigation arrows
+                // Month Headline
+                Text(CalendarHelper.monthTitle(for: currentMonth).uppercased())
+                    .font(UIStyles.headingFont)
+                    .foregroundColor(UIStyles.textColor)
+                    .padding(.horizontal)
+                
+                // Navigation arrows below headline
                 HStack {
-                    // Left arrow (go to previous month)
-                    if !CalendarHelper.isCurrentMonth(currentMonth) {
-                        Button(action: {
-                            withAnimation {
-                                currentMonth = CalendarHelper.changeMonth(currentMonth, by: -1)
-                            }
-                        }) {
-                            Image(systemName: "arrow.right") // arrow pointing right indicates going forward to current month
-                                .foregroundColor(UIStyles.secondaryAccentColor)
-                                .frame(width: 44, height: 44)
+                    // Left arrow: placed at left edge, moves backward in time
+                    Button(action: {
+                        withAnimation {
+                            currentMonth = CalendarHelper.changeMonth(currentMonth, by: -1)
                         }
-                    } else {
-                        // Placeholder to maintain layout consistency
-                        Spacer().frame(width: 44)
+                    }) {
+                        Image(systemName: "arrow.left")
+                            .resizable()
+                            .aspectRatio(contentMode: .fit)
+                            .frame(width: 40, height: 40)
+                            .foregroundColor(UIStyles.secondaryAccentColor)
                     }
                     
                     Spacer()
                     
-                    Text(CalendarHelper.monthTitle(for: currentMonth).uppercased())
-                        .font(UIStyles.headingFont)
-                        .foregroundColor(UIStyles.textColor)
-                    
-                    Spacer()
-                    
-                    // Right arrow (go to next month) if not the current month
+                    // Right arrow: placed at right edge, moves forward in time if within current month
                     if !CalendarHelper.isCurrentMonth(currentMonth) {
                         Button(action: {
                             withAnimation {
-                                currentMonth = CalendarHelper.changeMonth(currentMonth, by: 1)
+                                let potential = CalendarHelper.changeMonth(currentMonth, by: 1)
+                                if !CalendarHelper.isAfterCurrentMonth(potential) {
+                                    currentMonth = potential
+                                }
                             }
                         }) {
-                            Image(systemName: "arrow.left") // arrow pointing left indicates moving back to current month
+                            Image(systemName: "arrow.right")
+                                .resizable()
+                                .aspectRatio(contentMode: .fit)
+                                .frame(width: 40, height: 40)
                                 .foregroundColor(UIStyles.secondaryAccentColor)
-                                .frame(width: 44, height: 44)
                         }
                     } else {
-                        Spacer().frame(width: 44)
+                        Spacer().frame(width: 40)
                     }
                 }
                 .padding(.horizontal)
                 
-                // Calendar container with dots
+                // Calendar container with dots and swipe gesture
                 MonthCalendarView(baseDate: currentMonth)
                     .padding(.horizontal)
                     .transition(.slide)
                     .gesture(
                         DragGesture(minimumDistance: 20)
                             .onEnded { value in
-                                if value.translation.width < 0 {
-                                    // swipe left: go to previous month
+                                if value.translation.width > 0 {
+                                    // Swiping left-to-right: move backward in time
                                     withAnimation {
                                         currentMonth = CalendarHelper.changeMonth(currentMonth, by: -1)
                                     }
-                                } else if value.translation.width > 0 {
-                                    // swipe right: go to next month (if not current)
-                                    withAnimation {
-                                        currentMonth = CalendarHelper.changeMonth(currentMonth, by: 1)
+                                } else if value.translation.width < 0 {
+                                    // Swiping right-to-left: move forward in time, but not beyond current month
+                                    let potential = CalendarHelper.changeMonth(currentMonth, by: 1)
+                                    if !CalendarHelper.isAfterCurrentMonth(potential) {
+                                        withAnimation {
+                                            currentMonth = potential
+                                        }
                                     }
                                 }
                             }
@@ -78,14 +83,12 @@ struct OverviewView: View {
     }
 }
 
-// MonthCalendarView now accepts a baseDate to display that month.
 struct MonthCalendarView: View {
     let baseDate: Date
     @FetchRequest var monthEntries: FetchedResults<JournalEntryEntity>
     
     init(baseDate: Date) {
         self.baseDate = baseDate
-        // Predicate for entries in the month defined by baseDate
         let start = CalendarHelper.startOfMonth(for: baseDate)
         let end = CalendarHelper.startOfMonth(for: CalendarHelper.changeMonth(baseDate, by: 1))
         _monthEntries = FetchRequest<JournalEntryEntity>(
@@ -95,13 +98,13 @@ struct MonthCalendarView: View {
         )
     }
     
-    // Compute a mapping: day -> last mood (if any)
-    private var dayToLastMood: [Int: String] {
-        var map: [Int: String] = [:]
+    // Map each day's startOfDay to the last mood
+    private var dayDateToLastMood: [Date: String] {
+        var map: [Date: String] = [:]
         for entry in monthEntries {
             guard let ts = entry.timestamp, let mood = entry.mood else { continue }
-            let dayNum = CalendarHelper.dayOfMonth(from: ts, baseDate: baseDate)
-            map[dayNum] = mood
+            let dayFloor = CalendarHelper.stripTime(ts)
+            map[dayFloor] = mood
         }
         return map
     }
@@ -109,27 +112,37 @@ struct MonthCalendarView: View {
     private let columns = Array(repeating: GridItem(.flexible(), spacing: 0), count: 7)
     
     var body: some View {
+        let start = CalendarHelper.startOfMonth(for: baseDate)
+        let daysCount = CalendarHelper.daysInMonth(for: baseDate)
+        let offset = CalendarHelper.offsetForFirstDay(for: baseDate)
+        
         LazyVGrid(columns: columns, spacing: 16) {
-            // Placeholders for offset
-            ForEach(0..<CalendarHelper.offsetForFirstDay(for: baseDate), id: \.self) { _ in
+            // Insert blank circles for the offset with unique IDs
+            ForEach(0..<offset, id: \.self) { index in
                 Circle()
                     .fill(Color.clear)
                     .frame(height: circleSize)
+                    .id("offset-\(index)")
             }
-            // Days in month
-            ForEach(1...CalendarHelper.daysInMonth(for: baseDate), id: \.self) { day in
+            // For each day, compute the actual date and render a dot with a unique ID
+            ForEach(1...daysCount, id: \.self) { dayIndex in
+                let realDate = CalendarHelper.calendar.date(byAdding: .day, value: dayIndex - 1, to: start)!
+                let dayFloor = CalendarHelper.stripTime(realDate)
+                let mood = dayDateToLastMood[dayFloor]
+                
                 Circle()
-                    .fill(dayToLastMood[day].flatMap { UIStyles.moodColors[$0] } ?? UIStyles.tertiaryBackground)
+                    .fill(mood.flatMap { UIStyles.moodColors[$0] } ?? UIStyles.tertiaryBackground)
                     .frame(height: circleSize)
                     .overlay(
                         Group {
-                            if dayToLastMood[day] != nil {
-                                Text("\(day)")
+                            if mood != nil {
+                                Text("\(dayIndex)")
                                     .font(UIStyles.smallLabelFont)
                                     .foregroundColor(Color.white.opacity(0.7))
                             }
                         }
                     )
+                    .id("day-\(dayIndex)")
             }
         }
         .padding(.top, 8)
@@ -138,49 +151,55 @@ struct MonthCalendarView: View {
     private var circleSize: CGFloat { 28 }
 }
 
-// MARK: - CalendarHelper updated to work with a given baseDate.
 fileprivate struct CalendarHelper {
-    static private let calendar = Calendar(identifier: .gregorian)
+    static var calendar: Calendar = {
+        var cal = Calendar(identifier: .gregorian)
+        cal.firstWeekday = 2  // Monday as first day
+        return cal
+    }()
     
-    // Returns the start of the month for the given date.
     static func startOfMonth(for date: Date) -> Date {
-        calendar.date(from: calendar.dateComponents([.year, .month], from: date))!
+        guard let interval = calendar.dateInterval(of: .month, for: date) else {
+            return date
+        }
+        let anchored = calendar.date(bySettingHour: 12, minute: 0, second: 0, of: interval.start) ?? interval.start
+        return anchored
     }
     
-    // Returns the number of days in the month for the given base date.
     static func daysInMonth(for baseDate: Date) -> Int {
-        let range = calendar.range(of: .day, in: .month, for: baseDate)!
+        let start = startOfMonth(for: baseDate)
+        let range = calendar.range(of: .day, in: .month, for: start) ?? 1..<2
         return range.count
     }
     
-    // Computes offset for first day for the month of baseDate, with Monday as first column, Sunday as last.
     static func offsetForFirstDay(for baseDate: Date) -> Int {
         let start = startOfMonth(for: baseDate)
         let weekday = calendar.component(.weekday, from: start)
-        return (weekday + 5) % 7
+        return ((weekday + 7) - calendar.firstWeekday) % 7
     }
     
-    // Returns the day-of-month integer for a given date relative to baseDate.
-    static func dayOfMonth(from date: Date, baseDate: Date) -> Int {
-        calendar.component(.day, from: date)
+    static func stripTime(_ date: Date) -> Date {
+        calendar.startOfDay(for: date)
     }
     
-    // Returns the month title (e.g. "March 2025") for a given baseDate.
     static func monthTitle(for baseDate: Date) -> String {
         let formatter = DateFormatter()
         formatter.dateFormat = "MMMM yyyy"
         return formatter.string(from: baseDate)
     }
     
-    // Changes the given baseDate by the specified number of months.
     static func changeMonth(_ baseDate: Date, by value: Int) -> Date {
-        calendar.date(byAdding: .month, value: value, to: baseDate)!
+        calendar.date(byAdding: .month, value: value, to: baseDate) ?? baseDate
     }
     
-    // Checks if the given baseDate is the current month.
     static func isCurrentMonth(_ baseDate: Date) -> Bool {
         let current = startOfMonth(for: Date())
         return calendar.isDate(current, equalTo: baseDate, toGranularity: .month)
+    }
+    
+    static func isAfterCurrentMonth(_ baseDate: Date) -> Bool {
+        let current = startOfMonth(for: Date())
+        return baseDate > current
     }
 }
 

@@ -30,7 +30,7 @@ struct UIStyles {
     static let topSpacing: CGFloat = 80  // This value is now used exclusively in MainTabbedView for the top menu
     
     // MARK: - Typography
-    // Reduced headingFont size for main view headlines
+    // Slightly smaller headline for main view headlines
     static let headingFont = Font.custom("Menlo", size: 36)
     static let headingFontSize: CGFloat = 36
     static let bodyFont = Font.custom("Menlo", size: 16)
@@ -93,7 +93,7 @@ struct UIStyles {
         }
     }
     
-    static func primaryButton<Label: View>(@ViewBuilder label: () -> Label) -> some View {
+    static func primaryButton<Label: View>(@ViewBuilder label: @escaping () -> Label) -> some View {
         Button(action: {}) {
             label()
         }
