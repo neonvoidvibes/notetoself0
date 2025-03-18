@@ -35,13 +35,24 @@ struct NewEntrySheet: View {
                     }
                 }
                 
-                TextEditor(text: $text)
-                    .font(UIStyles.bodyFont)
-                    .foregroundColor(UIStyles.textColor)
-                    .frame(height: 120)
-                    .padding(8)
-                    .background(UIStyles.cardBackground)
-                    .cornerRadius(8)
+                // TextEditor with placeholder
+                ZStack(alignment: .topLeading) {
+                    TextEditor(text: $text)
+                        .font(UIStyles.bodyFont)
+                        .foregroundColor(UIStyles.textColor)
+                        .frame(height: 120)
+                        .padding(8)
+                        .background(UIStyles.cardBackground)
+                        .cornerRadius(8)
+                    
+                    if text.isEmpty {
+                        Text("Write a short note...")
+                            .font(UIStyles.bodyFont)
+                            .foregroundColor(UIStyles.textColor.opacity(0.4))
+                            .padding(.horizontal, 12)
+                            .padding(.vertical, 12)
+                    }
+                }
                 
                 Spacer()
                 

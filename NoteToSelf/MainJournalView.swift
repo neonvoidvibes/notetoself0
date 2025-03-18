@@ -13,7 +13,7 @@ struct MainJournalView: View {
         UIStyles.CustomZStack {
             VStack(alignment: .leading, spacing: 20) {
                 
-                // Title + "New Entry" button
+                // Header: Title and "New Entry" button
                 HStack {
                     Text("Daily Journal")
                         .font(UIStyles.headingFont)
@@ -32,14 +32,15 @@ struct MainJournalView: View {
                 // Daily Streak Info
                 DailyStreakView(entries: entries)
                 
-                // Timeline List
+                // Timeline List of Entries
                 ScrollView {
                     VStack(spacing: 12) {
                         ForEach(entries) { entry in
                             UIStyles.Card {
-                                Text(entry.timestamp ?? Date(), style: .date)
+                                Text((entry.timestamp ?? Date()), format: .dateTime.month().day().year())
                                     .font(UIStyles.smallLabelFont)
                                     .foregroundColor(UIStyles.textColor.opacity(0.6))
+                                
                                 if let mood = entry.mood, !mood.isEmpty {
                                     Text("Mood: \(mood)")
                                         .font(UIStyles.bodyFont)
@@ -55,6 +56,14 @@ struct MainJournalView: View {
                     }
                     .padding(.top, 8)
                 }
+                
+                // Divider between timeline and mood chart
+                Divider()
+                    .background(Color.white.opacity(0.5))
+                
+                // Mood Chart View added to bottom half
+                MoodChartView(entries: entries)
+                    .frame(height: 200)
                 
                 Spacer()
             }
@@ -78,8 +87,6 @@ struct DailyStreakView: View {
     }
     
     func calculateStreak() -> Int {
-        // Simple logic: check consecutive days
-        // Sort by date descending and see how many consecutive calendar days
         let sorted = entries.sorted { $0.timestamp ?? Date() > $1.timestamp ?? Date() }
         guard !sorted.isEmpty else { return 0 }
         
@@ -93,7 +100,6 @@ struct DailyStreakView: View {
                 streak += 1
                 previousDate = currentDate
             } else if diff > 1 {
-                // Streak broken
                 break
             }
         }
