@@ -1,6 +1,14 @@
 import SwiftUI
 
 struct MoodChartView: View {
+    // Accept journal entries
+    var entries: [JournalEntryEntity]
+    
+    // Group entries by startOfDay
+    private var groupedEntries: [Date: [JournalEntryEntity]] {
+        Dictionary(grouping: entries, by: { Calendar.current.startOfDay(for: $0.timestamp ?? Date()) })
+    }
+    
     // Generate 5 latest days: from 4 days ago to today.
     private var latestDates: [Date] {
         let calendar = Calendar.current
@@ -41,46 +49,67 @@ struct MoodChartView: View {
     }
     
     var body: some View {
-        // Use a ZStack to combine the line, dots, and date labels.
-        ZStack {
-            // The horizontal line
-            Rectangle()
-                .fill(UIStyles.offWhite)
-                .frame(width: lineWidth, height: lineThickness)
-                // Position the line: its left edge is at (extraLeft - leftExtension)
-                .position(x: (extraLeft - leftExtension) + lineWidth / 2, y: 50)
-            
-            // Dots for each day, with thick border and filled with app background
-            ForEach(latestDates.indices, id: \.self) { i in
-                let xPos = extraLeft + dotDiameter/2 + CGFloat(i) * daySpacing
+        VStack(spacing: 8) {
+            // Container for the horizontal line, dots, and date labels.
+            ZStack {
+                // Draw the horizontal offWhite line, extending from (extraLeft - leftExtension) to last dot.
+                Rectangle()
+                    .fill(UIStyles.offWhite)
+                    .frame(width: lineWidth, height: lineThickness)
+                    .position(x: (extraLeft - leftExtension) + lineWidth/2, y: 50)
+                
+                // Render dots for each day.
+                ForEach(latestDates.indices, id: \.self) { i in
+                    let xPos = extraLeft + dotDiameter/2 + CGFloat(i) * daySpacing
+                    dotView(for: latestDates[i])
+                        .position(x: xPos, y: 50)
+                }
+                
+                // Render date labels directly below each dot.
+                ForEach(latestDates.indices, id: \.self) { i in
+                    let xPos = extraLeft + dotDiameter/2 + CGFloat(i) * daySpacing
+                    Text(dateFormatter.string(from: latestDates[i]))
+                        .font(UIStyles.bodyFont)
+                        .foregroundColor(UIStyles.textColor)
+                        .position(x: xPos, y: 75)
+                }
+            }
+            .frame(width: lineWidth + leftExtension, height: 100, alignment: .leading)
+            .frame(maxWidth: .infinity, alignment: .leading)
+        }
+    }
+    
+    // Render a dot for a given day.
+    private func dotView(for day: Date) -> some View {
+        // Check if there are any journal entries for this day.
+        if let dayEntries = groupedEntries[day], !dayEntries.isEmpty {
+            // Sort entries by timestamp descending, take the latest.
+            let latestEntry = dayEntries.sorted { ($0.timestamp ?? Date.distantPast) > ($1.timestamp ?? Date.distantPast) }.first
+            let mood = latestEntry?.mood ?? ""
+            let moodColor = UIStyles.moodColors[mood.baseMood()] ?? Color.gray
+            return AnyView(
+                Circle()
+                    .fill(moodColor)
+                    .frame(width: dotDiameter, height: dotDiameter)
+            )
+        } else {
+            // No entry: outlined dot.
+            return AnyView(
                 Circle()
                     .fill(UIStyles.appBackground)
                     .overlay(
                         Circle().stroke(UIStyles.offWhite, lineWidth: 4)
                     )
                     .frame(width: dotDiameter, height: dotDiameter)
-                    .position(x: xPos, y: 50)
-            }
-            
-            // Date labels placed exactly below each dot.
-            ForEach(latestDates.indices, id: \.self) { i in
-                let xPos = extraLeft + dotDiameter/2 + CGFloat(i) * daySpacing
-                Text(dateFormatter.string(from: latestDates[i]))
-                    .font(UIStyles.bodyFont)
-                    .foregroundColor(UIStyles.textColor)
-                    // Position the date label below the dot; assume dot center is at y:50 and dot radius is 9, so place the label at y: 50 + 9 + 10 = 69.
-                    .position(x: xPos, y: 75)
-            }
+            )
         }
-        // The overall frame should at least accommodate the line extension to the left.
-        .frame(width: lineWidth + leftExtension, height: 100, alignment: .leading)
-        .frame(maxWidth: .infinity, alignment: .leading)
     }
 }
 
 struct MoodChartView_Previews: PreviewProvider {
     static var previews: some View {
-        MoodChartView()
+        // For preview, create dummy entries if needed. Here we pass an empty array.
+        MoodChartView(entries: [])
             .frame(height: 100)
     }
 }
