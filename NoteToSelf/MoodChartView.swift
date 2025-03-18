@@ -3,9 +3,6 @@ import SwiftUI
 struct MoodChartView: View {
     var entries: FetchedResults<JournalEntryEntity>
     
-    @State private var selectedEntry: JournalEntryEntity? = nil
-    @State private var showFullScreen: Bool = false
-    
     // Group entries by day using start of day as key
     var groupedEntries: [Date: [JournalEntryEntity]] {
         Dictionary(grouping: entries, by: { Calendar.current.startOfDay(for: $0.timestamp ?? Date()) })
@@ -53,7 +50,7 @@ struct MoodChartView: View {
                 }
                 .stroke(Color.white, style: StrokeStyle(lineWidth: 2, dash: [5, 3]))
                 
-                // Draw dots for each entry on each day
+                // Draw dots for each entry on each day without any tap functionality
                 ForEach(sortedDays, id: \.self) { day in
                     if let dayEntries = groupedEntries[day] {
                         let count = dayEntries.count
@@ -64,46 +61,12 @@ struct MoodChartView: View {
                         let baseY = yPosition(for: avgPos, in: geo.size.height)
                         ForEach(0..<count, id: \.self) { index in
                             let offset = CGFloat(index - count/2) * 6.0
-                            let entry = dayEntries[index]
                             Circle()
-                                .fill(UIStyles.moodColors[entry.mood ?? "Neutral"] ?? Color.gray)
+                                .fill(UIStyles.moodColors[dayEntries[index].mood ?? "Neutral"] ?? Color.gray)
                                 .frame(width: 12, height: 12)
                                 .position(x: xCenter, y: baseY + offset)
-                                .onTapGesture {
-                                    if selectedEntry?.objectID == entry.objectID {
-                                        showFullScreen.toggle()
-                                    } else {
-                                        selectedEntry = entry
-                                    }
-                                }
                         }
                     }
-                }
-                
-                // Overlay: If an entry is selected, show mood in a bright box with rounded corners
-                if let selected = selectedEntry, !showFullScreen {
-                    VStack {
-                        Text(selected.mood ?? "Neutral")
-                            .font(UIStyles.headingFont)
-                            .foregroundColor(UIStyles.textColor)
-                            .padding()
-                            .background(UIStyles.accentColor)
-                            .cornerRadius(20)
-                        Spacer()
-                    }
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    .background(Color.black.opacity(0.4).ignoresSafeArea())
-                    .onTapGesture {
-                        showFullScreen = true
-                    }
-                }
-            }
-            .fullScreenCover(isPresented: $showFullScreen, onDismiss: {
-                selectedEntry = nil
-                showFullScreen = false
-            }) {
-                if let entry = selectedEntry {
-                    FullMoodDetailView(entry: entry)
                 }
             }
         }
@@ -122,35 +85,5 @@ struct MoodChartView: View {
     // Map a positivity value to a y position (inverted so higher positivity is higher up)
     func yPosition(for positivity: Double, in height: CGFloat) -> CGFloat {
         return CGFloat((1.0 - positivity)) * height
-    }
-}
-
-struct FullMoodDetailView: View {
-    var entry: JournalEntryEntity
-    @Environment(\.dismiss) private var dismiss
-    
-    var body: some View {
-        VStack {
-            Text("Mood: \(entry.mood ?? "Neutral")")
-                .font(UIStyles.headingFont)
-                .foregroundColor(UIStyles.textColor)
-                .padding()
-                .frame(maxWidth: .infinity)
-                .background(UIStyles.accentColor)
-                .cornerRadius(20)
-            if let text = entry.text, !text.isEmpty {
-                Text(text)
-                    .font(UIStyles.bodyFont)
-                    .foregroundColor(UIStyles.textColor)
-                    .padding()
-            }
-            Spacer()
-            Button("Close") {
-                dismiss()
-            }
-            .buttonStyle(UIStyles.PrimaryButtonStyle())
-            .padding()
-        }
-        .background(UIStyles.appBackground.ignoresSafeArea())
     }
 }

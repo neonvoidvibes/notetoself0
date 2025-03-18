@@ -27,9 +27,9 @@ struct NewEntrySheet: View {
                                 Text(mood)
                                     .padding(.vertical, 8)
                                     .padding(.horizontal, 12)
-                                    .background(selectedMood == mood ? UIStyles.accentColor : UIStyles.cardBackground)
+                                    .background(selectedMood == mood ? UIStyles.moodColors[mood] ?? UIStyles.accentColor : UIStyles.cardBackground)
                                     .foregroundColor(selectedMood == mood ? .white : UIStyles.textColor)
-                                    .cornerRadius(8)
+                                    .cornerRadius(12)
                             }
                         }
                     }
@@ -43,7 +43,7 @@ struct NewEntrySheet: View {
                         .frame(height: 120)
                         .padding(8)
                         .background(UIStyles.cardBackground)
-                        .cornerRadius(8)
+                        .cornerRadius(12)
                     
                     if text.isEmpty {
                         Text("Write a short note...")
@@ -62,6 +62,7 @@ struct NewEntrySheet: View {
                         saveEntry()
                     }
                     .buttonStyle(UIStyles.PrimaryButtonStyle())
+                    .disabled(selectedMood.isEmpty)
                 }
             }
             .padding()
@@ -88,7 +89,6 @@ struct NewEntrySheet: View {
             try moc.save()
             dismiss()
         } catch {
-            // handle error
             print("Failed to save new entry: \(error)")
         }
     }

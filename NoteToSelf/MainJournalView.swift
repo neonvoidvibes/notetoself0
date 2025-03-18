@@ -9,10 +9,15 @@ struct MainJournalView: View {
     
     @State private var showNewEntry = false
     
+    // Define two flexible columns for the grid
+    let columns: [GridItem] = [
+        GridItem(.flexible(), spacing: 12),
+        GridItem(.flexible(), spacing: 12)
+    ]
+    
     var body: some View {
         UIStyles.CustomZStack {
             VStack(alignment: .leading, spacing: 20) {
-                
                 // Header: Title and "New Entry" button
                 HStack {
                     Text("Daily Journal")
@@ -32,15 +37,12 @@ struct MainJournalView: View {
                 // Daily Streak Info
                 DailyStreakView(entries: entries)
                 
-                // Timeline List of Entries
+                // Timeline: Use LazyVGrid with 2 columns
                 ScrollView {
-                    VStack(spacing: 12) {
+                    LazyVGrid(columns: columns, spacing: 12) {
                         ForEach(entries) { entry in
                             UIStyles.Card {
-                                Text((entry.timestamp ?? Date()), format: .dateTime.month().day().year())
-                                    .font(UIStyles.smallLabelFont)
-                                    .foregroundColor(UIStyles.textColor.opacity(0.6))
-                                
+                                // Show mood and truncated text (one line)
                                 if let mood = entry.mood, !mood.isEmpty {
                                     Text("Mood: \(mood)")
                                         .font(UIStyles.bodyFont)
@@ -50,6 +52,7 @@ struct MainJournalView: View {
                                     Text(text)
                                         .font(UIStyles.bodyFont)
                                         .foregroundColor(UIStyles.textColor)
+                                        .lineLimit(1)
                                 }
                             }
                         }
@@ -57,7 +60,6 @@ struct MainJournalView: View {
                     .padding(.top, 8)
                 }
                 
-                // Divider between timeline and mood chart
                 Divider()
                     .background(Color.white.opacity(0.5))
                 
