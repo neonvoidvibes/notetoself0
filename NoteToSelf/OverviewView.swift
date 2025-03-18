@@ -8,15 +8,14 @@ struct OverviewView: View {
     var body: some View {
         UIStyles.CustomZStack {
             VStack(alignment: .leading, spacing: 24) {
-                // Month Headline
+                // Month Headline (no extra horizontal padding needed)
                 Text(CalendarHelper.monthTitle(for: currentMonth).uppercased())
                     .font(UIStyles.headingFont)
                     .foregroundColor(UIStyles.textColor)
-                    .padding(.horizontal)
                 
-                // Navigation arrows below headline
+                // Navigation arrows below headline (remove extra horizontal padding)
                 HStack {
-                    // Left arrow: placed at left edge, moves backward in time
+                    // Left arrow: moves backward in time
                     Button(action: {
                         withAnimation {
                             currentMonth = CalendarHelper.changeMonth(currentMonth, by: -1)
@@ -31,8 +30,7 @@ struct OverviewView: View {
                     
                     Spacer()
                     
-                    // Right arrow: placed at right edge, moves forward in time if within current month.
-                    // Long press on this arrow resets currentMonth to the current month.
+                    // Right arrow: moves forward in time if not in current month; long press resets to current month
                     if !CalendarHelper.isCurrentMonth(currentMonth) {
                         Button(action: {
                             withAnimation {
@@ -60,13 +58,11 @@ struct OverviewView: View {
                         Spacer().frame(width: 40)
                     }
                 }
-                .padding(.horizontal)
                 
-                // Entire calendar container is swipeable
+                // Entire calendar container is swipeable (remove extra horizontal padding)
                 MonthCalendarView(baseDate: currentMonth)
-                    .padding(.horizontal)
-                    .contentShape(Rectangle())
                     .transition(.slide)
+                    .contentShape(Rectangle())
                     .gesture(
                         DragGesture(minimumDistance: 20)
                             .onEnded { value in
