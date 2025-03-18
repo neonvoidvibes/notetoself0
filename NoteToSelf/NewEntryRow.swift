@@ -5,14 +5,14 @@ struct NewEntryRow: View {
     @Environment(\.managedObjectContext) private var moc
     // Binding to control presentation from MainJournalView
     @Binding var isPresented: Bool
-    
+
     @State private var text: String = ""
     @State private var selectedMood: String = ""
     @State private var showMoodSelector: Bool = false
-    
+
     // Example mood options
     let moodOptions = ["Happy", "Neutral", "Sad", "Stressed", "Excited"]
-    
+
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             // Editable row mimicking a submitted entry
@@ -22,9 +22,10 @@ struct NewEntryRow: View {
                     .foregroundColor(.white)
                     .frame(minHeight: 40, maxHeight: 80)
                     .padding(4)
-                    .background(Color(hex: "#111111"))
+                    // Force input field background to black using custom setting
+                    .background(Color.black)
                     .cornerRadius(UIStyles.defaultCornerRadius)
-                // "Mood" button replaces mood dot
+                // "Mood" button with black text on white background
                 Button(action: {
                     withAnimation {
                         showMoodSelector.toggle()
@@ -49,6 +50,7 @@ struct NewEntryRow: View {
                 }
                 .font(UIStyles.bodyFont)
                 .foregroundColor(UIStyles.accentColor)
+
                 Button("Save") {
                     saveEntry()
                 }
@@ -57,10 +59,10 @@ struct NewEntryRow: View {
             }
         }
         .padding()
-        .background(Color(hex: "#111111"))
+        // Outer container: enforce black background, remove any inner borders and shadows
+        .background(Color.black)
         .cornerRadius(UIStyles.defaultCornerRadius)
         .overlay(
-            // Mood selector overlay
             Group {
                 if showMoodSelector {
                     VStack(spacing: 12) {
@@ -82,19 +84,18 @@ struct NewEntryRow: View {
                     .padding()
                     .background(BlurView(style: .systemMaterial))
                     .cornerRadius(UIStyles.defaultCornerRadius)
-                    .shadow(radius: 8)
                     .padding(40)
                 }
             }
         )
     }
-    
+
     private func saveEntry() {
         let newItem = JournalEntryEntity(context: moc)
         newItem.timestamp = Date()
         newItem.text = text.trimmingCharacters(in: .whitespacesAndNewlines)
         newItem.mood = selectedMood
-        
+
         do {
             try moc.save()
             withAnimation {
@@ -106,21 +107,18 @@ struct NewEntryRow: View {
     }
 }
 
-// A simple UIViewRepresentable wrapper for a blur effect
 struct BlurView: UIViewRepresentable {
     var style: UIBlurEffect.Style = .systemMaterial
-    
+
     func makeUIView(context: Context) -> UIVisualEffectView {
-        let view = UIVisualEffectView(effect: UIBlurEffect(style: style))
-        return view
+        return UIVisualEffectView(effect: UIBlurEffect(style: style))
     }
-    
+
     func updateUIView(_ uiView: UIVisualEffectView, context: Context) {}
 }
 
 struct NewEntryRow_Previews: PreviewProvider {
     static var previews: some View {
-        // For preview purposes, create an in-memory managed object context
         let context = PersistenceController.preview.container.viewContext
         return NewEntryRow(isPresented: .constant(true))
             .environment(\.managedObjectContext, context)

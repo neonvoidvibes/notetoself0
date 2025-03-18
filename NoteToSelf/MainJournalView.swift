@@ -13,7 +13,7 @@ struct MainJournalView: View {
     // State for showing insights toggle
     @State private var showInsights = false
     // State to show the new entry sheet modal
-    @State private var showNewEntrySheet = false
+    @State private var showNewEntryView = false
     
     var body: some View {
         UIStyles.CustomZStack {
@@ -32,7 +32,7 @@ struct MainJournalView: View {
                     Spacer()
                     Button {
                         withAnimation {
-                            showNewEntrySheet = true
+                            showNewEntryView = true
                         }
                     } label: {
                         Text("+ Add")
@@ -45,7 +45,6 @@ struct MainJournalView: View {
                     }
                 }
                 
-                // The list of entries in a scroll view.
                 ScrollViewReader { proxy in
                     ScrollView {
                         LazyVStack(spacing: 12) {
@@ -58,14 +57,13 @@ struct MainJournalView: View {
                                                 expandedEntry = nil
                                             } else {
                                                 expandedEntry = entry.objectID
-                                                // Scroll the expanded entry into view
                                                 proxy.scrollTo(entry.objectID, anchor: .bottom)
                                             }
                                         }
                                     }
                             }
                         }
-                        .padding(.bottom, 20) // Extra space between entries and chart area
+                        .padding(.bottom, 20)
                     }
                 }
                 
@@ -88,9 +86,9 @@ struct MainJournalView: View {
                         .font(.custom("Menlo", size: 20))
                         .foregroundColor(Color.gray)
                 }
-                .padding(.leading, UIStyles.globalHorizontalPadding) // Aligned with other elements
+                .padding(.leading, UIStyles.globalHorizontalPadding)
                 
-                // Chart area (height reduced to 180)
+                // Chart area
                 if showInsights {
                     VStack {
                         Text("Insights coming soon")
@@ -107,9 +105,8 @@ struct MainJournalView: View {
                 Spacer()
             }
         }
-        // Present the new entry sheet modally (using default iOS sheet style)
-        .sheet(isPresented: $showNewEntrySheet) {
-            NewEntrySheet()
+        .sheet(isPresented: $showNewEntryView) {
+            NewEntryView()
         }
     }
 }
