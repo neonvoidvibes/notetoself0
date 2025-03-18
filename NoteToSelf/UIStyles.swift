@@ -10,10 +10,10 @@ struct UIStyles {
     static let offWhite = Color(red: 0.95, green: 0.95, blue: 0.95)
     static let entryBackground = Color(hex: "#0A0A0A")
     
-    // Secondary background as needed
     static let secondaryBackground = Color(hex: "#111111")
-    // New tertiary background color for dots
     static let tertiaryBackground = Color(hex: "#313131")
+    // New quaternary color for intensity modal background
+    static let quaternaryBackground = Color(hex: "#555555")
     
     // Proper colors for moods
     static let moodColors: [String: Color] = [
@@ -27,14 +27,13 @@ struct UIStyles {
     // MARK: - Layout Constants
     static let globalHorizontalPadding: CGFloat = 20
     static let globalVerticalPadding: CGFloat = 16
-    static let topSpacing: CGFloat = 80  // This value is now used exclusively in MainTabbedView for the top menu
+    static let topSpacing: CGFloat = 80
     
     // MARK: - Typography
     static let headingFont = Font.custom("Menlo", size: 36)
     static let headingFontSize: CGFloat = 36
     static let bodyFont = Font.custom("Menlo", size: 16)
     static let smallLabelFont = Font.custom("Menlo", size: 14)
-    // New tiny headline font for intensity modal title
     static let tinyHeadlineFont = Font.custom("Menlo", size: 12)
     
     // MARK: - Custom Containers
@@ -101,7 +100,6 @@ struct UIStyles {
         .buttonStyle(PrimaryButtonStyle())
     }
     
-    // New full-width Save button style with increased rounded corners
     struct FullWidthSaveButtonStyle: ButtonStyle {
         func makeBody(configuration: Configuration) -> some View {
             configuration.label
@@ -118,7 +116,6 @@ struct UIStyles {
     
     static let saveButtonCornerRadius: CGFloat = 30
     
-    // MARK: - Card Container
     struct Card<Content: View>: View {
         let content: () -> Content
         init(@ViewBuilder content: @escaping () -> Content) {
@@ -138,7 +135,6 @@ struct UIStyles {
     static let defaultCornerRadius: CGFloat = 12
 }
 
-// MARK: - Color Hex Extension
 extension Color {
     init(hex: String) {
         let hex = hex.trimmingCharacters(in: CharacterSet.alphanumerics.inverted)
@@ -165,7 +161,6 @@ extension Color {
     }
 }
 
-// MARK: - Bottom Sheet Style Preset
 struct BottomSheetStyleModifier: ViewModifier {
     func body(content: Content) -> some View {
         content
@@ -181,7 +176,6 @@ extension View {
     }
 }
 
-// MARK: - String Extensions for Mood Parsing
 extension String {
     func baseMood() -> String {
         return self.components(separatedBy: "|").first ?? self

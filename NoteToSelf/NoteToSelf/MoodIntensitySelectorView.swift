@@ -32,7 +32,7 @@ struct MoodIntensitySelectorView: View {
                 }
             }
             .padding()
-            .background(Color(hex: "#000000"))
+            .background(UIStyles.quaternaryBackground)
             .cornerRadius(UIStyles.defaultCornerRadius)
             .shadow(radius: 10)
             .frame(maxWidth: 200)

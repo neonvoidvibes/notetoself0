@@ -18,7 +18,7 @@ struct MoodSelectorView: View {
     var body: some View {
         ZStack {
             // Dimming background
-            Color.black.opacity(0.6)
+            UIStyles.tertiaryBackground
                 .ignoresSafeArea()
                 .onTapGesture {
                     showOverlay = false

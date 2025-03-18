@@ -8,14 +8,11 @@ struct OverviewView: View {
     var body: some View {
         UIStyles.CustomZStack {
             VStack(alignment: .leading, spacing: 24) {
-                // Month Headline (no extra horizontal padding needed)
                 Text(CalendarHelper.monthTitle(for: currentMonth).uppercased())
                     .font(UIStyles.headingFont)
                     .foregroundColor(UIStyles.textColor)
                 
-                // Navigation arrows below headline (remove extra horizontal padding)
                 HStack {
-                    // Left arrow: moves backward in time
                     Button(action: {
                         withAnimation {
                             currentMonth = CalendarHelper.changeMonth(currentMonth, by: -1)
@@ -30,7 +27,6 @@ struct OverviewView: View {
                     
                     Spacer()
                     
-                    // Right arrow: moves forward in time if not in current month; long press resets to current month
                     if !CalendarHelper.isCurrentMonth(currentMonth) {
                         Button(action: {
                             withAnimation {
@@ -59,7 +55,6 @@ struct OverviewView: View {
                     }
                 }
                 
-                // Entire calendar container is swipeable (remove extra horizontal padding)
                 MonthCalendarView(baseDate: currentMonth)
                     .transition(.slide)
                     .contentShape(Rectangle())
@@ -67,12 +62,10 @@ struct OverviewView: View {
                         DragGesture(minimumDistance: 20)
                             .onEnded { value in
                                 if value.translation.width > 0 {
-                                    // Swiping left-to-right: move backward in time
                                     withAnimation {
                                         currentMonth = CalendarHelper.changeMonth(currentMonth, by: -1)
                                     }
                                 } else if value.translation.width < 0 {
-                                    // Swiping right-to-left: move forward in time, but not beyond current month
                                     let potential = CalendarHelper.changeMonth(currentMonth, by: 1)
                                     if !CalendarHelper.isAfterCurrentMonth(potential) {
                                         withAnimation {
@@ -104,7 +97,6 @@ struct MonthCalendarView: View {
         )
     }
     
-    // Map each day's startOfDay to the last mood
     private var dayDateToLastMood: [Date: String] {
         var map: [Date: String] = [:]
         for entry in monthEntries {
@@ -123,32 +115,32 @@ struct MonthCalendarView: View {
         let offset = CalendarHelper.offsetForFirstDay(for: baseDate)
         
         LazyVGrid(columns: columns, spacing: 16) {
-            // Insert blank circles for the offset with unique IDs
             ForEach(0..<offset, id: \.self) { index in
                 Circle()
                     .fill(Color.clear)
                     .frame(height: circleSize)
                     .id("offset-\(index)")
             }
-            // For each day, compute the actual date and render a dot with unique IDs
             ForEach(1...daysCount, id: \.self) { dayIndex in
                 let realDate = CalendarHelper.calendar.date(byAdding: .day, value: dayIndex - 1, to: start)!
                 let dayFloor = CalendarHelper.stripTime(realDate)
                 let mood = dayDateToLastMood[dayFloor]
-                
-                Circle()
-                    .fill(mood.flatMap { UIStyles.moodColors[$0] } ?? UIStyles.tertiaryBackground)
-                    .frame(height: circleSize)
-                    .overlay(
-                        Group {
-                            if mood != nil {
-                                Text("\(dayIndex)")
-                                    .font(UIStyles.smallLabelFont)
-                                    .foregroundColor(Color.white.opacity(0.7))
-                            }
-                        }
-                    )
-                    .id("day-\(dayIndex)")
+                if let mood = mood {
+                    Circle()
+                        .fill(UIStyles.moodColors[mood.baseMood()]?.opacity(mood.moodOpacity()) ?? UIStyles.tertiaryBackground)
+                        .frame(height: circleSize)
+                        .overlay(
+                            Text("\(dayIndex)")
+                                .font(UIStyles.smallLabelFont)
+                                .foregroundColor(Color.white.opacity(0.7))
+                        )
+                        .id("day-\(dayIndex)")
+                } else {
+                    Circle()
+                        .fill(UIStyles.tertiaryBackground)
+                        .frame(height: circleSize)
+                        .id("day-\(dayIndex)")
+                }
             }
         }
         .padding(.top, 8)
@@ -157,10 +149,10 @@ struct MonthCalendarView: View {
     private var circleSize: CGFloat { 28 }
 }
 
-fileprivate struct CalendarHelper {
+struct CalendarHelper {
     static var calendar: Calendar = {
         var cal = Calendar(identifier: .gregorian)
-        cal.firstWeekday = 2  // Monday as first day
+        cal.firstWeekday = 2
         return cal
     }()
     

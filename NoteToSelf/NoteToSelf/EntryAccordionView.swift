@@ -1,9 +1,9 @@
 import SwiftUI
 
-struct MainJournalView: View {
+struct EntryAccordionView: View {
     var entry: JournalEntryEntity
     var isExpanded: Bool
-    
+
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             // Primary row remains fixed.
@@ -48,5 +48,19 @@ struct MainJournalView: View {
         .background(isExpanded ? Color(hex: "#111111") : UIStyles.entryBackground)
         .cornerRadius(UIStyles.defaultCornerRadius)
         .animation(.easeInOut, value: isExpanded)
+    }
+}
+
+struct EntryAccordionView_Previews: PreviewProvider {
+    static var previews: some View {
+        // Assuming existence of a dummy JournalEntryEntity for preview purposes.
+        let context = PersistenceController.preview.container.viewContext
+        let sampleEntry = JournalEntryEntity(context: context)
+        sampleEntry.text = "Sample Entry"
+        sampleEntry.mood = "Happy"
+        sampleEntry.timestamp = Date()
+
+        return EntryAccordionView(entry: sampleEntry, isExpanded: false)
+            .previewLayout(.sizeThatFits)
     }
 }
