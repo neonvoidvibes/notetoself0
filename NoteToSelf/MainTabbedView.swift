@@ -25,7 +25,7 @@ struct MainTabbedView: View {
                         VStack(spacing: 0) {
                             // TOP BAR
                             HStack {
-                                // Always show left menu icon (now without opacity modifier).
+                                // Always show left menu icon.
                                 AnimatedMenuIcon(isOpen: showMainMenu)
                                     .matchedGeometryEffect(id: "leftMenuIcon", in: menuIconNamespace)
                                     .onTapGesture {
@@ -38,7 +38,7 @@ struct MainTabbedView: View {
                                 
                                 Spacer()
                                 
-                                // Always show right settings icon (now without opacity modifier).
+                                // Always show right settings icon.
                                 AnimatedSettingsIcon(isOpen: showSettingsMenu)
                                     .matchedGeometryEffect(id: "rightSettingsIcon", in: menuIconNamespace)
                                     .onTapGesture {
@@ -52,12 +52,12 @@ struct MainTabbedView: View {
                             .padding(.top, UIStyles.topSpacing)
                             .padding(.bottom, 10)
                             
-                            // TAB BAR (header row) with additional bottom spacing
+                            // TAB BAR (header row) with bottom spacing (vertical padding of 32 is set inside TabBarView)
                             TabBarView(selectedTab: $selectedTab)
                                 .padding(.bottom, 20)
                                 .frame(height: 50)
                             
-                            // SELECTED CONTENT
+                            // SELECTED CONTENT with extra top padding so it appears below the TabBarView
                             ZStack {
                                 switch selectedTab {
                                 case .overview:
@@ -70,6 +70,7 @@ struct MainTabbedView: View {
                                     ChatView()
                                 }
                             }
+                            .padding(.top, 32)
                             .frame(maxWidth: .infinity, maxHeight: .infinity)
                         }
                         .background(UIStyles.appBackground.ignoresSafeArea())
@@ -101,7 +102,6 @@ struct MainTabbedView: View {
                             VStack {
                                 HStack {
                                     Spacer()
-                                    // Icon inside left menu to close the menu.
                                     AnimatedMenuIcon(isOpen: showMainMenu)
                                         .matchedGeometryEffect(id: "leftMenuIcon", in: menuIconNamespace)
                                         .onTapGesture {
@@ -129,7 +129,6 @@ struct MainTabbedView: View {
                             Spacer()
                             VStack {
                                 HStack {
-                                    // Icon inside right menu to close the settings menu.
                                     AnimatedSettingsIcon(isOpen: showSettingsMenu)
                                         .matchedGeometryEffect(id: "rightSettingsIcon", in: menuIconNamespace)
                                         .onTapGesture {
@@ -165,11 +164,9 @@ struct AnimatedMenuIcon: View {
             let spacing: CGFloat = 8
             
             ZStack(alignment: .topLeading) {
-                // Top line
                 Rectangle()
                     .fill(Color.white)
                     .frame(width: isOpen ? w * 0.8 : w, height: lineHeight)
-                // Bottom line
                 Rectangle()
                     .fill(Color.white)
                     .frame(width: isOpen ? w : w * 0.8, height: lineHeight)
@@ -192,12 +189,10 @@ struct AnimatedSettingsIcon: View {
             let circleDiameter: CGFloat = 8
             
             ZStack(alignment: .topLeading) {
-                // Top line
                 Rectangle()
                     .fill(Color.white)
                     .frame(width: width, height: lineHeight)
                 
-                // Top circle
                 ZStack {
                     Circle()
                         .fill(Color.black)
@@ -208,13 +203,11 @@ struct AnimatedSettingsIcon: View {
                 }
                 .offset(x: isOpen ? 2 : (width - circleDiameter - 2), y: -circleDiameter/2)
                 
-                // Bottom line
                 Rectangle()
                     .fill(Color.white)
                     .frame(width: width, height: lineHeight)
                     .offset(y: spacing)
                 
-                // Bottom circle
                 ZStack {
                     Circle()
                         .fill(Color.black)
