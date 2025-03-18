@@ -3,27 +3,74 @@ import CoreData
 
 struct OverviewView: View {
     @Environment(\.managedObjectContext) private var moc
-    
-    // MARK: - Fetch the current month’s entries
-    @FetchRequest(
-        sortDescriptors: [NSSortDescriptor(keyPath: \JournalEntryEntity.timestamp, ascending: true)],
-        predicate: NSPredicate(format: "timestamp >= %@ AND timestamp < %@",
-                               argumentArray: [CalendarHelper.currentMonthStart, CalendarHelper.nextMonthStart]),
-        animation: .default
-    )
-    private var monthlyEntries: FetchedResults<JournalEntryEntity>
+    @State private var currentMonth: Date = CalendarHelper.startOfMonth(for: Date())
     
     var body: some View {
         UIStyles.CustomZStack {
             VStack(alignment: .leading, spacing: 24) {
+                // Header with month title and navigation arrows
+                HStack {
+                    // Left arrow (go to previous month)
+                    if !CalendarHelper.isCurrentMonth(currentMonth) {
+                        Button(action: {
+                            withAnimation {
+                                currentMonth = CalendarHelper.changeMonth(currentMonth, by: -1)
+                            }
+                        }) {
+                            Image(systemName: "arrow.right") // arrow pointing right indicates going forward to current month
+                                .foregroundColor(UIStyles.secondaryAccentColor)
+                                .frame(width: 44, height: 44)
+                        }
+                    } else {
+                        // Placeholder to maintain layout consistency
+                        Spacer().frame(width: 44)
+                    }
+                    
+                    Spacer()
+                    
+                    Text(CalendarHelper.monthTitle(for: currentMonth).uppercased())
+                        .font(UIStyles.headingFont)
+                        .foregroundColor(UIStyles.textColor)
+                    
+                    Spacer()
+                    
+                    // Right arrow (go to next month) if not the current month
+                    if !CalendarHelper.isCurrentMonth(currentMonth) {
+                        Button(action: {
+                            withAnimation {
+                                currentMonth = CalendarHelper.changeMonth(currentMonth, by: 1)
+                            }
+                        }) {
+                            Image(systemName: "arrow.left") // arrow pointing left indicates moving back to current month
+                                .foregroundColor(UIStyles.secondaryAccentColor)
+                                .frame(width: 44, height: 44)
+                        }
+                    } else {
+                        Spacer().frame(width: 44)
+                    }
+                }
+                .padding(.horizontal)
                 
-                // Month Headline
-                Text(CalendarHelper.monthTitle.uppercased())
-                    .font(UIStyles.headingFont)
-                    .foregroundColor(UIStyles.textColor)
-                
-                // The custom "calendar" of dots
-                MonthCalendarView(entries: monthlyEntries)
+                // Calendar container with dots
+                MonthCalendarView(baseDate: currentMonth)
+                    .padding(.horizontal)
+                    .transition(.slide)
+                    .gesture(
+                        DragGesture(minimumDistance: 20)
+                            .onEnded { value in
+                                if value.translation.width < 0 {
+                                    // swipe left: go to previous month
+                                    withAnimation {
+                                        currentMonth = CalendarHelper.changeMonth(currentMonth, by: -1)
+                                    }
+                                } else if value.translation.width > 0 {
+                                    // swipe right: go to next month (if not current)
+                                    withAnimation {
+                                        currentMonth = CalendarHelper.changeMonth(currentMonth, by: 1)
+                                    }
+                                }
+                            }
+                    )
                 
                 Spacer()
             }
@@ -31,94 +78,109 @@ struct OverviewView: View {
     }
 }
 
-// MARK: - Subview representing the custom calendar for the month
+// MonthCalendarView now accepts a baseDate to display that month.
 struct MonthCalendarView: View {
-    let entries: FetchedResults<JournalEntryEntity>
+    let baseDate: Date
+    @FetchRequest var monthEntries: FetchedResults<JournalEntryEntity>
     
-    // Group journal entries by day of month to get the last mood recorded for that day.
+    init(baseDate: Date) {
+        self.baseDate = baseDate
+        // Predicate for entries in the month defined by baseDate
+        let start = CalendarHelper.startOfMonth(for: baseDate)
+        let end = CalendarHelper.startOfMonth(for: CalendarHelper.changeMonth(baseDate, by: 1))
+        _monthEntries = FetchRequest<JournalEntryEntity>(
+            sortDescriptors: [NSSortDescriptor(keyPath: \JournalEntryEntity.timestamp, ascending: true)],
+            predicate: NSPredicate(format: "timestamp >= %@ AND timestamp < %@", start as NSDate, end as NSDate),
+            animation: .default
+        )
+    }
+    
+    // Compute a mapping: day -> last mood (if any)
     private var dayToLastMood: [Int: String] {
         var map: [Int: String] = [:]
-        for entry in entries {
+        for entry in monthEntries {
             guard let ts = entry.timestamp, let mood = entry.mood else { continue }
-            let dayNum = CalendarHelper.dayOfMonth(from: ts)
+            let dayNum = CalendarHelper.dayOfMonth(from: ts, baseDate: baseDate)
             map[dayNum] = mood
         }
         return map
     }
     
-    // Layout: 7 columns (Mon-Sun), rows depend on offset and total days
     private let columns = Array(repeating: GridItem(.flexible(), spacing: 0), count: 7)
     
     var body: some View {
         LazyVGrid(columns: columns, spacing: 16) {
-            // Leading placeholders for offset
-            ForEach(0..<CalendarHelper.offsetForFirstDay, id: \.self) { _ in
+            // Placeholders for offset
+            ForEach(0..<CalendarHelper.offsetForFirstDay(for: baseDate), id: \.self) { _ in
                 Circle()
                     .fill(Color.clear)
                     .frame(height: circleSize)
             }
-            
-            // For each day in the month, create a dot with the appropriate color.
-            ForEach(1...CalendarHelper.daysInCurrentMonth, id: \.self) { day in
+            // Days in month
+            ForEach(1...CalendarHelper.daysInMonth(for: baseDate), id: \.self) { day in
                 Circle()
-                    .fill(dayToLastMood[day].flatMap { UIStyles.moodColors[$0] } ?? UIStyles.secondaryBackground)
+                    .fill(dayToLastMood[day].flatMap { UIStyles.moodColors[$0] } ?? UIStyles.tertiaryBackground)
                     .frame(height: circleSize)
                     .overlay(
-                        Text("\(day)")
-                            .font(UIStyles.smallLabelFont)
-                            .foregroundColor(Color.white.opacity(0.7))
+                        Group {
+                            if dayToLastMood[day] != nil {
+                                Text("\(day)")
+                                    .font(UIStyles.smallLabelFont)
+                                    .foregroundColor(Color.white.opacity(0.7))
+                            }
+                        }
                     )
             }
         }
         .padding(.top, 8)
     }
     
-    // Define a dot size that is larger than in InsightsView but not overly large.
-    private var circleSize: CGFloat {
-        28
-    }
+    private var circleSize: CGFloat { 28 }
 }
 
-// MARK: - Calendar Helper
+// MARK: - CalendarHelper updated to work with a given baseDate.
 fileprivate struct CalendarHelper {
     static private let calendar = Calendar(identifier: .gregorian)
     
-    static var now: Date { Date() }
-    
-    // Start of the current month.
-    static var currentMonthStart: Date {
-        calendar.date(from: calendar.dateComponents([.year, .month], from: now))!
+    // Returns the start of the month for the given date.
+    static func startOfMonth(for date: Date) -> Date {
+        calendar.date(from: calendar.dateComponents([.year, .month], from: date))!
     }
     
-    // Start of the next month.
-    static var nextMonthStart: Date {
-        calendar.date(byAdding: .month, value: 1, to: currentMonthStart)!
-    }
-    
-    // Total number of days in the current month.
-    static var daysInCurrentMonth: Int {
-        let range = calendar.range(of: .day, in: .month, for: now)!
+    // Returns the number of days in the month for the given base date.
+    static func daysInMonth(for baseDate: Date) -> Int {
+        let range = calendar.range(of: .day, in: .month, for: baseDate)!
         return range.count
     }
     
-    // Offset for the first day; if the first day is Monday, offset = 0; if Sunday, offset = 6.
-    static var offsetForFirstDay: Int {
-        let weekday = calendar.component(.weekday, from: currentMonthStart)
-        // Transform default (1=Sunday, 2=Monday, ...) to (Monday=1,...,Sunday=7)
-        let index = ((weekday + 5) % 7) + 1
-        return index - 1
+    // Computes offset for first day for the month of baseDate, with Monday as first column, Sunday as last.
+    static func offsetForFirstDay(for baseDate: Date) -> Int {
+        let start = startOfMonth(for: baseDate)
+        let weekday = calendar.component(.weekday, from: start)
+        return (weekday + 5) % 7
     }
     
-    // Month title, e.g., "March 2025".
-    static var monthTitle: String {
+    // Returns the day-of-month integer for a given date relative to baseDate.
+    static func dayOfMonth(from date: Date, baseDate: Date) -> Int {
+        calendar.component(.day, from: date)
+    }
+    
+    // Returns the month title (e.g. "March 2025") for a given baseDate.
+    static func monthTitle(for baseDate: Date) -> String {
         let formatter = DateFormatter()
         formatter.dateFormat = "MMMM yyyy"
-        return formatter.string(from: now)
+        return formatter.string(from: baseDate)
     }
     
-    // Helper to get the day-of-month integer from a date.
-    static func dayOfMonth(from date: Date) -> Int {
-        calendar.component(.day, from: date)
+    // Changes the given baseDate by the specified number of months.
+    static func changeMonth(_ baseDate: Date, by value: Int) -> Date {
+        calendar.date(byAdding: .month, value: value, to: baseDate)!
+    }
+    
+    // Checks if the given baseDate is the current month.
+    static func isCurrentMonth(_ baseDate: Date) -> Bool {
+        let current = startOfMonth(for: Date())
+        return calendar.isDate(current, equalTo: baseDate, toGranularity: .month)
     }
 }
 

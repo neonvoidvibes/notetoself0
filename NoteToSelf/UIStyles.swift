@@ -12,6 +12,8 @@ struct UIStyles {
     
     // Secondary background as needed
     static let secondaryBackground = Color(hex: "#111111")
+    // New tertiary background color for dots
+    static let tertiaryBackground = Color(hex: "#313131")
     
     // Proper colors for moods
     static let moodColors: [String: Color] = [
@@ -28,8 +30,9 @@ struct UIStyles {
     static let topSpacing: CGFloat = 80  // This value is now used exclusively in MainTabbedView for the top menu
     
     // MARK: - Typography
-    static let headingFont = Font.custom("Menlo", size: 48)
-    static let headingFontSize: CGFloat = 48
+    // Reduced headingFont size for main view headlines
+    static let headingFont = Font.custom("Menlo", size: 36)
+    static let headingFontSize: CGFloat = 36
     static let bodyFont = Font.custom("Menlo", size: 16)
     static let smallLabelFont = Font.custom("Menlo", size: 14)
     
@@ -45,7 +48,6 @@ struct UIStyles {
                 ZStack(alignment: .topLeading) {
                     appBackground.ignoresSafeArea()
                     VStack(alignment: .leading, spacing: 0) {
-                        // Use only the safe area inset, no extra topSpacing added here.
                         Spacer().frame(height: geo.safeAreaInsets.top)
                         content()
                     }
@@ -119,7 +121,6 @@ struct UIStyles {
 }
 
 extension Color {
-    // Helper initializer for hex color codes.
     init(hex: String) {
         let hex = hex.trimmingCharacters(in: CharacterSet.alphanumerics.inverted)
         var int: UInt64 = 0
