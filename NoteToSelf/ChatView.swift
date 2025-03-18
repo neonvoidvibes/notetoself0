@@ -77,6 +77,7 @@ struct ChatMessageBubble: View {
                         .padding()
                         .background(UIStyles.userMessageBubbleColor)
                         .clipShape(UIStyles.ChatBubbleShape(isUser: true))
+                        .frame(maxWidth: UIScreen.main.bounds.width * 0.75, alignment: .trailing)
                 }
             }
         }
