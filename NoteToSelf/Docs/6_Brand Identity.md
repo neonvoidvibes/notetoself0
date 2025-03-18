@@ -1,4 +1,4 @@
-# Document 6: Brand Identity
+# Document 6. Brand Identity
 
 Below is a revised concept/brand document that shifts the focus toward a distinct brand identity while avoiding repetitive feature lists. The document emphasizes our premium, frictionless journaling experience and introduces a set of unique, single-word name ideas.
 

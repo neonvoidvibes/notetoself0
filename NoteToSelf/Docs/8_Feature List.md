@@ -1,4 +1,4 @@
-# Document 8: Feature List
+# Document 8. Feature List
 
 Below is a hierarchical, prioritized feature list organized by release phase:
 

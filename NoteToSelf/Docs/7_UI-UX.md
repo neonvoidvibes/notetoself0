@@ -1,4 +1,4 @@
-# Document 7: UI/UX
+# Document 7. UI/UX
 
 Below is a comprehensive UI/UX design document that integrates all requirements into a single, up‑to‑date vision for the micro‑journal app. In cases where details differed, the guidelines below reflect the refined, dark, high‑contrast, and minimalist aesthetic, with a focus on fluid, natural interactions and fast usability.
 

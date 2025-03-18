@@ -1,4 +1,4 @@
-# Document 10: Implementation Plan
+# Document 10. Implementation Plan
 
 Below is the detailed, step‑by‑step implementation plan for the first version release of “Note to Self.” Each step and sub‑step is clearly marked with [human engineer] or [ai coder] and includes checkboxes for tracking progress, including backend preparations for GPT‑4o integration and theme options.
 

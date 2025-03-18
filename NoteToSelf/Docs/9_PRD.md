@@ -1,4 +1,4 @@
-# Document 9: PRD
+# Document 9. PRD
 
 Below is a combined Product Requirements Document (PRD) and Technical Specification for the “Note to Self” Micro-Journal app. This document is written so that every developer can fully understand the product without needing to reference additional materials. It emphasizes a modular, best-practice iOS architecture with a strict separation of concerns—most notably, all visual elements are encapsulated within a single Swift UI library file for rapid iteration and isolated UI updates.
 
