@@ -11,6 +11,10 @@ struct NotesView: View {
     @State private var expandedEntry: NSManagedObjectID? = nil
     @State private var showNewEntryView = false
     
+    // Draft text & mood
+    @State private var draftNoteText: String = ""
+    @State private var draftMood: String = "Neutral"
+    
     var body: some View {
         UIStyles.CustomZStack {
             VStack(alignment: .leading, spacing: 20) {
@@ -60,7 +64,25 @@ struct NotesView: View {
             }
         }
         .sheet(isPresented: $showNewEntryView) {
-            NewEntryView()
+            NewEntryView(
+                noteText: $draftNoteText,
+                selectedMood: $draftMood
+            ) {
+                // onSave closure
+                let newEntry = JournalEntryEntity(context: moc)
+                newEntry.timestamp = Date()
+                newEntry.text = draftNoteText
+                newEntry.mood = draftMood
+                do {
+                    try moc.save()
+                } catch {
+                    print("Failed to save new entry: \\(error)")
+                }
+                
+                // clear draft after saving
+                draftNoteText = ""
+                draftMood = "Neutral"
+            }
         }
     }
 }

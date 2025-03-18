@@ -30,7 +30,6 @@ struct UIStyles {
     static let topSpacing: CGFloat = 80  // This value is now used exclusively in MainTabbedView for the top menu
     
     // MARK: - Typography
-    // Slightly smaller headline for main view headlines
     static let headingFont = Font.custom("Menlo", size: 36)
     static let headingFontSize: CGFloat = 36
     static let bodyFont = Font.custom("Menlo", size: 16)
@@ -120,6 +119,7 @@ struct UIStyles {
     static let defaultCornerRadius: CGFloat = 12
 }
 
+// MARK: - Color Hex Extension
 extension Color {
     init(hex: String) {
         let hex = hex.trimmingCharacters(in: CharacterSet.alphanumerics.inverted)
@@ -143,5 +143,23 @@ extension Color {
             blue: Double(b) / 255,
             opacity: Double(a) / 255
         )
+    }
+}
+
+// MARK: - Bottom Sheet Style Preset
+struct BottomSheetStyleModifier: ViewModifier {
+    func body(content: Content) -> some View {
+        // For demonstration, a fixed height + large.
+        // In real usage, adjust as desired or use .presentationDetents([.medium]) etc.
+        content
+            .presentationDetents([.height(420), .large])
+            .presentationCornerRadius(30)
+            .presentationDragIndicator(.visible)
+    }
+}
+
+extension View {
+    func applyBottomSheetStyle() -> some View {
+        modifier(BottomSheetStyleModifier())
     }
 }
