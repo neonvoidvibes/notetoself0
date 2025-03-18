@@ -31,7 +31,8 @@ struct OverviewView: View {
                     
                     Spacer()
                     
-                    // Right arrow: placed at right edge, moves forward in time if within current month
+                    // Right arrow: placed at right edge, moves forward in time if within current month.
+                    // Long press on this arrow resets currentMonth to the current month.
                     if !CalendarHelper.isCurrentMonth(currentMonth) {
                         Button(action: {
                             withAnimation {
@@ -47,6 +48,14 @@ struct OverviewView: View {
                                 .frame(width: 40, height: 40)
                                 .foregroundColor(UIStyles.secondaryAccentColor)
                         }
+                        .simultaneousGesture(
+                            LongPressGesture(minimumDuration: 0.5)
+                                .onEnded { _ in
+                                    withAnimation {
+                                        currentMonth = CalendarHelper.startOfMonth(for: Date())
+                                    }
+                                }
+                        )
                     } else {
                         Spacer().frame(width: 40)
                     }
