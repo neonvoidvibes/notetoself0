@@ -25,7 +25,7 @@ struct ChatView: View {
             Rectangle()
                 .fill(Color.black)
                 .frame(height: 20)
-            // Chat input container with extended height and increased top padding for a larger container
+            // Chat input container with extended height, increased padding, and more rounded corners
             HStack(spacing: 8) {
                 TextEditor(text: $currentInput)
                     .font(UIStyles.bodyFont)
@@ -33,7 +33,7 @@ struct ChatView: View {
                     .accentColor(UIStyles.accentColor)
                     .scrollContentBackground(.hidden)
                     .cornerRadius(UIStyles.defaultCornerRadius)
-                    .frame(minHeight: 40, maxHeight: 100)
+                    .frame(minHeight: 50, maxHeight: 120)
                 Button(action: {
                     let trimmed = currentInput.trimmingCharacters(in: .whitespacesAndNewlines)
                     guard !trimmed.isEmpty else { return }
@@ -44,15 +44,15 @@ struct ChatView: View {
                         .font(Font.system(size: 26, weight: .bold))
                         .foregroundColor(Color(hex: "#555555"))
                 }
-                .frame(width: 36, height: 36)
+                .frame(width: 38, height: 38)
                 .background(Color.white)
                 .clipShape(Circle())
             }
             .padding(.horizontal, UIStyles.globalHorizontalPadding)
-            .padding(.vertical, 12)
+            .padding(.vertical, 16)
             .padding(.bottom, 16)
             .background(Color(hex: "#313131"))
-            .cornerRadius(UIStyles.chatInputContainerCornerRadius * 2)
+            .cornerRadius(UIStyles.chatInputContainerCornerRadius * 3)
         }
         .background(UIStyles.chatBackground.edgesIgnoringSafeArea(.all))
     }
