@@ -4,9 +4,9 @@
       "idiom" : "universal",
       "color" : {
         "alpha" : "1.0",
-        "blue" : "0.70",
-        "green" : "0.75",
-        "red" : "0.10"
+        "blue" : "1.0",
+        "green" : "1.0",
+        "red" : "1.0"
       }
     }
   ],
