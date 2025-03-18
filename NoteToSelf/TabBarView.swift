@@ -107,6 +107,7 @@ struct TabBarView: View {
                 .fill(tab == selectedTab ? UIStyles.accentColor : Color.clear)
                 .frame(height: 3)
         }
+        .padding(.vertical, 32)  // Extra spacing above and below each tab item
         .onTapGesture {
             withAnimation {
                 selectedTab = tab
