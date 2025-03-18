@@ -3,7 +3,7 @@ import SwiftUI
 struct OverviewView: View {
     var body: some View {
         UIStyles.CustomVStack {
-            // Extra top padding increased to push the headline further down
+            // Extra top padding increased to 60 to push the headline further down
             Text("Overview")
                 .font(UIStyles.headingFont)
                 .foregroundColor(UIStyles.textColor)

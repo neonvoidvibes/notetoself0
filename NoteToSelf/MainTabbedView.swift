@@ -53,11 +53,13 @@ struct MainTabbedView: View {
                                         .padding(.horizontal, menuIconHorizontalPadding)
                                 }
                             }
-                            // Apply only a top padding to fix the vertical position.
+                            // Use UIStyles.topSpacing for top padding; removed extra horizontal padding to align icons with screen edges.
                             .padding(.top, UIStyles.topSpacing)
+                            .padding(.bottom, 10)
                             
-                            // TAB BAR
+                            // TAB BAR (header row)
                             TabBarView(selectedTab: $selectedTab)
+                                .padding(.top, 20) // extra top padding for the header row
                                 .frame(height: 50)
                             
                             // SELECTED CONTENT
