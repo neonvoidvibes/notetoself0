@@ -10,7 +10,7 @@ struct MainTabbedView: View {
     // Matched geometry namespace for animating icons
     @Namespace private var menuIconNamespace
     
-    // Horizontal padding for icons
+    // Horizontal padding for icons (using the global horizontal padding from UIStyles)
     private let menuIconHorizontalPadding: CGFloat = UIStyles.globalHorizontalPadding
     
     var body: some View {
@@ -35,7 +35,7 @@ struct MainTabbedView: View {
                                                 showMainMenu.toggle()
                                             }
                                         }
-                                        .padding(20)
+                                        .padding(.horizontal, menuIconHorizontalPadding)
                                 }
                                 
                                 Spacer()
@@ -50,13 +50,11 @@ struct MainTabbedView: View {
                                                 showSettingsMenu.toggle()
                                             }
                                         }
-                                        .padding(20)
+                                        .padding(.horizontal, menuIconHorizontalPadding)
                                 }
                             }
-                            // Use UIStyles.topSpacing for both top & bottom spacing
+                            // Apply only a top padding to fix the vertical position.
                             .padding(.top, UIStyles.topSpacing)
-                            .padding(.bottom, UIStyles.topSpacing)
-                            .padding(.horizontal, 16)
                             
                             // TAB BAR
                             TabBarView(selectedTab: $selectedTab)
