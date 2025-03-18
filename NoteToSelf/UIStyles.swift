@@ -25,7 +25,7 @@ struct UIStyles {
     // MARK: - Layout Constants
     static let globalHorizontalPadding: CGFloat = 20
     static let globalVerticalPadding: CGFloat = 16
-    static let topSpacing: CGFloat = 80  // increased universal top spacing
+    static let topSpacing: CGFloat = 80  // This value is now used exclusively in MainTabbedView for the top menu
     
     // MARK: - Typography
     static let headingFont = Font.custom("Menlo", size: 48)
@@ -45,7 +45,8 @@ struct UIStyles {
                 ZStack(alignment: .topLeading) {
                     appBackground.ignoresSafeArea()
                     VStack(alignment: .leading, spacing: 0) {
-                        Spacer().frame(height: geo.safeAreaInsets.top + topSpacing)
+                        // Use only the safe area inset, no extra topSpacing added here.
+                        Spacer().frame(height: geo.safeAreaInsets.top)
                         content()
                     }
                     .padding(.horizontal, globalHorizontalPadding)

@@ -52,8 +52,9 @@ struct MainTabbedView: View {
                             .padding(.top, UIStyles.topSpacing)
                             .padding(.bottom, 10)
                             
-                            // TAB BAR (header row)
+                            // TAB BAR (header row) with additional bottom spacing
                             TabBarView(selectedTab: $selectedTab)
+                                .padding(.bottom, 20)
                                 .frame(height: 50)
                             
                             // SELECTED CONTENT
