@@ -9,7 +9,7 @@ struct InsightsView: View {
     ) private var entries: FetchedResults<JournalEntryEntity>
     
     var body: some View {
-        UIStyles.CustomVStack {
+        UIStyles.CustomZStack {
             Text("Insights")
                 .font(UIStyles.headingFont)
                 .foregroundColor(UIStyles.textColor)

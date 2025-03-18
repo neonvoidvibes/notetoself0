@@ -2,7 +2,7 @@ import SwiftUI
 
 struct ChatView: View {
     var body: some View {
-        UIStyles.CustomVStack {
+        UIStyles.CustomZStack {
             Text("Chat")
                 .font(UIStyles.headingFont)
                 .foregroundColor(UIStyles.textColor)

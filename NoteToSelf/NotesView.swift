@@ -14,8 +14,6 @@ struct NotesView: View {
     var body: some View {
         UIStyles.CustomZStack {
             VStack(alignment: .leading, spacing: 20) {
-                Spacer().frame(height: 20)
-                
                 Text("Notes")
                     .font(UIStyles.headingFont)
                     .foregroundColor(UIStyles.textColor)
