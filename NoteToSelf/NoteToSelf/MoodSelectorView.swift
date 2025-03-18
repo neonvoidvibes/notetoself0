@@ -2,26 +2,36 @@ import SwiftUI
 
 struct MoodSelectorView: View {
     @Binding var selectedMood: String
-    @Environment(\.dismiss) private var dismiss
+    @Binding var showOverlay: Bool
     
-    // Our mood presets from UIStyles
+    // Mood presets
     let moods = ["Happy", "Excited", "Neutral", "Sad", "Stressed"]
     
+    // Use 3 columns grid layout, centered
     private let columns = [
-        GridItem(.flexible()),
-        GridItem(.flexible()),
         GridItem(.flexible()),
         GridItem(.flexible()),
         GridItem(.flexible())
     ]
     
+    // State for intensity selection modal
+    @State private var showIntensitySelector = false
+    @State private var moodForIntensity: String = ""
+    
     var body: some View {
         ZStack {
-            UIStyles.secondaryBackground.ignoresSafeArea()
+            // Background for modal: full opacity using #000000
+            Color(hex: "#000000")
+                .frame(maxWidth: 300, maxHeight: 400)
+                .cornerRadius(UIStyles.defaultCornerRadius)
+                .shadow(radius: 10)
+                .onTapGesture {
+                    // Tapping outside does not dismiss this modal (handled in overlay container)
+                }
             
             VStack(spacing: 20) {
-                Text("Select Your Mood")
-                    .font(UIStyles.headingFont)
+                Text("Select your mood")
+                    .font(UIStyles.smallLabelFont)
                     .foregroundColor(.white)
                 
                 LazyVGrid(columns: columns, alignment: .center, spacing: 24) {
@@ -29,31 +39,47 @@ struct MoodSelectorView: View {
                         VStack(spacing: 6) {
                             Circle()
                                 .fill(UIStyles.moodColors[mood] ?? Color.gray)
-                                .frame(width: 40, height: 40)
+                                .frame(width: 28, height: 28)
                                 .onTapGesture {
-                                    selectedMood = mood
-                                    dismiss()
+                                    if mood == "Neutral" {
+                                        selectedMood = mood
+                                        showOverlay = false
+                                    } else {
+                                        moodForIntensity = mood
+                                        showIntensitySelector = true
+                                    }
                                 }
                             
                             Text(mood)
-                                .font(UIStyles.bodyFont)
+                                .font(UIStyles.smallLabelFont)
                                 .foregroundColor(.white)
                         }
                     }
                 }
-                .padding(.horizontal, 16)
                 
                 Spacer()
             }
-            .padding(.top, 20)
+            .padding(16)
+            
+            // Intensity selection overlay presented within this modal
+            if showIntensitySelector {
+                MoodIntensitySelectorView(mood: moodForIntensity) { intensity in
+                    // Set the selected mood with intensity information.
+                    selectedMood = "\(moodForIntensity) (Intensity \(intensity))"
+                    showIntensitySelector = false
+                    showOverlay = false
+                }
+                .transition(.scale)
+            }
         }
+        .frame(maxWidth: 300, maxHeight: 400)
     }
 }
 
 struct MoodSelectorView_Previews: PreviewProvider {
     static var previews: some View {
         StatefulWrapper("Neutral") { binding in
-            MoodSelectorView(selectedMood: binding)
+            MoodSelectorView(selectedMood: binding, showOverlay: .constant(true))
         }
     }
 }

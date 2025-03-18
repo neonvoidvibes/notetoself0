@@ -10,7 +10,7 @@ struct NewEntryView: View {
     
     @Environment(\.dismiss) private var dismiss
     
-    // For presenting mood selector
+    // For presenting mood selector overlay
     @State private var showMoodSelector = false
     
     var body: some View {
@@ -20,16 +20,13 @@ struct NewEntryView: View {
                 .ignoresSafeArea()
             
             VStack(spacing: 16) {
-                
-                // Top bar with a plus sign inside a round button (semi-transparent)
+                // Top bar with an "x" icon inside a round button (semi-transparent)
                 HStack {
                     Spacer()
-                    
                     Button(action: {
-                        // Dismiss without saving, text is preserved in the parent's state
                         dismiss()
                     }) {
-                        Image(systemName: "plus")
+                        Image(systemName: "xmark")
                             .font(.system(size: 18, weight: .bold))
                             .foregroundColor(.white)
                             .padding()
@@ -40,25 +37,24 @@ struct NewEntryView: View {
                 }
                 .padding(.top, 16)
                 
-                // Title or prompt (optional)
+                // Title
                 Text("Add Note")
                     .font(UIStyles.headingFont)
                     .foregroundColor(.white)
                 
-                // Input editor
+                // Input editor with background color set to #000000
                 TextEditor(text: $noteText)
                     .font(UIStyles.bodyFont)
                     .foregroundColor(.white)
                     .padding(12)
                     .frame(minHeight: 100, maxHeight: 150)
-                    .background(Color(hex: "#111111"))
+                    .background(Color(hex: "#000000"))
                     .cornerRadius(UIStyles.defaultCornerRadius)
                     .scrollContentBackground(.hidden)
                     .padding(.horizontal, 16)
                 
                 // Mood picker row
                 HStack(spacing: 8) {
-                    // Mood circle
                     Circle()
                         .fill(UIStyles.moodColors[selectedMood] ?? Color.gray)
                         .frame(width: 28, height: 28)
@@ -79,11 +75,10 @@ struct NewEntryView: View {
                 
                 Spacer()
                 
-                // Bottom "Save" button
+                // Bottom Save button
                 HStack {
                     Spacer()
                     Button(action: {
-                        // Perform parent's save logic, then dismiss
                         onSave()
                         dismiss()
                     }) {
@@ -93,22 +88,23 @@ struct NewEntryView: View {
                     .padding(.trailing, 16)
                 }
                 .padding(.bottom, 16)
-                
-            } // VStack
+            }
         }
-        // Apply bottom sheet style with large corners
+        // Present MoodSelectorView as an overlay
+        .overlay(
+            Group {
+                if showMoodSelector {
+                    MoodSelectorView(selectedMood: $selectedMood, showOverlay: $showMoodSelector)
+                        .transition(.opacity)
+                }
+            }
+        )
         .applyBottomSheetStyle()
-        // Present mood selector
-        .sheet(isPresented: $showMoodSelector) {
-            MoodSelectorView(selectedMood: $selectedMood)
-                .applyBottomSheetStyle()
-        }
     }
 }
 
 struct NewEntryView_Previews: PreviewProvider {
     static var previews: some View {
-        // Example usage with local state using two separate bindings
         StatefulPreviewWrapper(("", "Neutral")) { noteBinding, moodBinding in
             NewEntryView(
                 noteText: noteBinding,

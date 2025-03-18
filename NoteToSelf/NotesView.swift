@@ -30,13 +30,9 @@ struct NotesView: View {
                             showNewEntryView = true
                         }
                     } label: {
-                        Text("+ Add")
-                            .font(UIStyles.bodyFont)
-                            .foregroundColor(.black)
-                            .padding(.horizontal, 20)
-                            .padding(.vertical, 12)
-                            .background(UIStyles.accentColor)
-                            .cornerRadius(UIStyles.defaultCornerRadius)
+                        Image(systemName: "square.and.pencil")
+                            .font(.system(size: 20))
+                            .foregroundColor(UIStyles.secondaryAccentColor)
                     }
                 }
                 
@@ -68,7 +64,6 @@ struct NotesView: View {
                 noteText: $draftNoteText,
                 selectedMood: $draftMood
             ) {
-                // onSave closure
                 let newEntry = JournalEntryEntity(context: moc)
                 newEntry.timestamp = Date()
                 newEntry.text = draftNoteText
@@ -76,10 +71,8 @@ struct NotesView: View {
                 do {
                     try moc.save()
                 } catch {
-                    print("Failed to save new entry: \\(error)")
+                    print("Failed to save new entry: \(error)")
                 }
-                
-                // clear draft after saving
                 draftNoteText = ""
                 draftMood = "Neutral"
             }
