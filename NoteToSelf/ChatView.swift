@@ -63,8 +63,9 @@ struct ChatMessageBubble: View {
                 HStack {
                     Text(message.content ?? "")
                         .font(UIStyles.chatFont)
+                        .foregroundColor(.white)
                         .padding()
-                        .background(UIStyles.assistantMessageBubbleColor)
+                        .background(Color.clear)
                         .clipShape(UIStyles.ChatBubbleShape(isUser: false))
                     Spacer()
                 }
