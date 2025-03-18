@@ -43,8 +43,8 @@ struct TabBarView: View {
                                     contentWidth = contentGeo.size.width
                                     updateChevronVisibility(containerWidth: geo.size.width)
                                 }
-                                .onChange(of: contentGeo.size.width) { newWidth in
-                                    contentWidth = newWidth
+                                .onChange(of: contentGeo.size.width) { oldValue, newValue in
+                                    contentWidth = newValue
                                     updateChevronVisibility(containerWidth: geo.size.width)
                                 }
                         }
@@ -89,9 +89,9 @@ struct TabBarView: View {
             }
             .contentShape(Rectangle())
             .offset(x: -scrollOffset)
-            .onChange(of: selectedTab) { tab in
+            .onChange(of: selectedTab) { oldTab, newTab in
                 DispatchQueue.main.async {
-                    centerSelected(tab: tab, containerWidth: geo.size.width)
+                    centerSelected(tab: newTab, containerWidth: geo.size.width)
                 }
             }
         }

@@ -10,6 +10,9 @@ struct UIStyles {
     static let offWhite = Color(red: 0.95, green: 0.95, blue: 0.95)
     static let entryBackground = Color(hex: "#0A0A0A")
     
+    // Added per request
+    static let secondaryBackground = Color(hex: "#111111")
+    
     // Proper colors for moods
     static let moodColors: [String: Color] = [
         "Happy": Color(red: 1.0, green: 0.84, blue: 0.0),
