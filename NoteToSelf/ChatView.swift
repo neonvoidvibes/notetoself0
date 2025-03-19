@@ -94,8 +94,8 @@ struct ChatView: View {
                 }) {
                     if viewModel.isAssistantTyping {
                         Image(systemName: "stop.fill")
-                            .font(Font.system(size: 26, weight: .bold))
-                            .foregroundColor(.white)
+                            .font(Font.system(size: 18, weight: .bold))
+                            .foregroundColor(UIStyles.chatInputContainerBackground)
                     } else {
                         Image(systemName: "arrow.up")
                             .font(Font.system(size: 26, weight: .bold))
@@ -103,7 +103,7 @@ struct ChatView: View {
                     }
                 }
                 .frame(width: 40, height: 40)
-                .background(viewModel.isAssistantTyping ? UIStyles.chatInputContainerBackground : Color.white)
+                .background(Color.white)
                 .clipShape(Circle())
                 .padding(.bottom, UIStyles.globalHorizontalPadding)
             }
