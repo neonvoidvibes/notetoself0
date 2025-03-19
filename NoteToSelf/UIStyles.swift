@@ -222,10 +222,10 @@ struct BreathingAnimation: ViewModifier {
     func body(content: Content) -> some View {
         content
             .scaleEffect(scale)
-            .opacity(Double(2.0 - scale))
+            .opacity(2.0 - scale)
             .onAppear {
-                withAnimation(Animation.easeInOut(duration: 0.5).repeatForever(autoreverses: true)) {
-                    scale = 1.2
+                withAnimation(Animation.easeInOut(duration: 1.0).repeatForever(autoreverses: true)) {
+                    scale = 1.5
                 }
             }
     }

@@ -56,6 +56,7 @@ final class ChatViewModel: ObservableObject {
         guard !isUserStopping else { return }
         Swift.print("📝 [ChatVM] Received user message: \(userText)")
         
+        // 1) Save user message
         let userEntry = ChatMessageEntity(context: context)
         userEntry.id = UUID()
         userEntry.content = userText
@@ -64,27 +65,42 @@ final class ChatViewModel: ObservableObject {
         saveContext()
         messages.append(userEntry)
         
-        handleUserMessage(userText)
+        // 2) Proceed with normal chat. We'll parse the GPT-4 reply to see if retrieval is needed
+        proceedWithChat(userText, hiddenJournal: nil)
     }
     
-    private func handleUserMessage(_ userText: String) {
-        let lowered = userText.lowercased()
-        if lowered.contains("journal") || lowered.contains("data") || lowered.contains("lately") ||
-           lowered.contains("recent") || lowered.contains("all") {
-            handOffToJournalRetrieval(query: userText)
-        } else {
-            proceedWithChat(userText, hiddenJournal: nil)
+    // Removed handleUserMessage entirely. We'll directly call proceedWithChat in sendMessage.
+
+    // parseAssistantReply: helper that tries to decode if GPT-4 wants retrieval
+    private func parseAssistantReply(_ text: String) -> (shouldRetrieve: Bool, query: String?) {
+        // Attempt to parse a JSON object of form {"action":"retrieve","query":"something"}
+        if let jsonStart = text.firstIndex(of: "{"),
+           let jsonEnd = text.lastIndex(of: "}"),
+           jsonEnd > jsonStart {
+            let jsonString = String(text[jsonStart...jsonEnd])
+            if let jsonData = jsonString.data(using: .utf8) {
+                do {
+                    let parsed = try JSONSerialization.jsonObject(with: jsonData, options: []) as? [String:Any]
+                    if let action = parsed?["action"] as? String,
+                       action.lowercased() == "retrieve",
+                       let q = parsed?["query"] as? String {
+                        return (true, q)
+                    }
+                } catch {
+                    // It's not valid JSON or not the correct shape
+                }
+            }
         }
+        return (false, nil)
     }
     
     private func handOffToJournalRetrieval(query: String) {
         guard !isUserStopping else { return }
         Swift.print("🔎 [ChatVM] Handing off to JournalRetrievalAgent with query: \(query)")
-        
-        // 1) Generate a unique confirmation message via LLM
         isAssistantTyping = true
         Task {
             do {
+                // 1) Send confirmation prompt to GPT-4 chat service
                 let confirmPrompt = "Please confirm: Retrieve journal entries for: \(query)"
                 let confirmReply = try await chatService.sendMessage(systemPrompt: chatAgentSystemPrompt, userMessage: confirmPrompt)
                 let confirmEntry = ChatMessageEntity(context: context)
@@ -94,27 +110,27 @@ final class ChatViewModel: ObservableObject {
                 confirmEntry.timestamp = Date()
                 saveContext()
                 messages.append(confirmEntry)
-            } catch {
-                Swift.print("❌ [ChatVM] Confirmation error: \(error.localizedDescription)")
-            }
-        }
-        
-        // 2) Proceed with retrieval after a short delay, showing loading dot
-        Task {
-            do {
+                
+                // 2) Wait a short delay before retrieval
                 try await Task.sleep(nanoseconds: 300_000_000)
+                
                 if isUserStopping {
                     Swift.print("🛑 [ChatVM] User stopped retrieval mid-task.")
                     isAssistantTyping = false
+                    resetStopState()
                     return
                 }
+                
+                // 3) Fetch journal data and proceed with chat reply
                 let fetchedData = journalRetrievalAgent.fetchJournalData(query: query)
                 Swift.print("🔎 [ChatVM] Journal data fetched, length: \(fetchedData.count)")
                 isAssistantTyping = false
                 proceedWithChat(query, hiddenJournal: fetchedData)
+                resetStopState()
             } catch {
-                Swift.print("❌ [ChatVM] Retrieval agent error: \(error)")
+                Swift.print("❌ [ChatVM] Error in journal retrieval: \(error.localizedDescription)")
                 isAssistantTyping = false
+                resetStopState()
             }
         }
     }
@@ -124,7 +140,7 @@ final class ChatViewModel: ObservableObject {
         isAssistantTyping = true
         let chatHistoryContext = buildChatContext(for: messages, hiddenJournal: hiddenJournal)
         Swift.print("📜 [ChatVM] Sending context to GPT-4:")
-        
+
         Task {
             do {
                 let reply = try await chatService.sendMessage(
@@ -137,7 +153,11 @@ final class ChatViewModel: ObservableObject {
                     return
                 }
                 Swift.print("🤖 [ChatVM] Received GPT-4 reply: \(reply)")
-                
+
+                // Attempt to parse JSON for retrieval instructions
+                let (shouldRetrieve, retrievalQuery) = parseAssistantReply(reply)
+
+                // Save the GPT-4 reply as an assistant message
                 let assistantEntry = ChatMessageEntity(context: context)
                 assistantEntry.id = UUID()
                 assistantEntry.content = reply
@@ -145,9 +165,15 @@ final class ChatViewModel: ObservableObject {
                 assistantEntry.timestamp = Date()
                 saveContext()
                 messages.append(assistantEntry)
-                
+
                 isAssistantTyping = false
                 Swift.print("💾 [ChatVM] Saved assistant message. Total messages: \(messages.count)")
+
+                // If GPT-4 wants retrieval, hand off to JournalRetrievalAgent with the indicated query
+                if shouldRetrieve, let query = retrievalQuery {
+                    handOffToJournalRetrieval(query: query)
+                }
+
             } catch {
                 Swift.print("❌ [ChatVM] GPT-4 error: \(error.localizedDescription)")
                 isAssistantTyping = false
