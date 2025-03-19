@@ -91,7 +91,6 @@ final class ChatViewModel: ObservableObject {
     
     // MARK: - User Action: Send Message
     func sendMessage(_ userText: String) {
-        guard !isUserStopping else { return }
         Swift.print("📝 [ChatVM] Received user message: \(userText)")
         
         // 1) Save user message
@@ -132,7 +131,6 @@ final class ChatViewModel: ObservableObject {
     
     // MARK: - Proceed with Chat
     private func proceedWithChat(_ userMessage: String, hiddenJournal: String?) {
-        guard !isUserStopping else { return }
         isAssistantTyping = true
         let chatHistoryContext = buildChatContext(for: messages, hiddenJournal: hiddenJournal)
         Swift.print("📜 [ChatVM] Sending context to GPT-4:")
@@ -146,6 +144,7 @@ final class ChatViewModel: ObservableObject {
                 if isUserStopping {
                     Swift.print("🛑 [ChatVM] Stopped after chat request returned.")
                     isAssistantTyping = false
+                    isUserStopping = false
                     return
                 }
                 Swift.print("🤖 [ChatVM] Received GPT-4 reply: \(reply)")
@@ -213,6 +212,7 @@ final class ChatViewModel: ObservableObject {
                 if isUserStopping {
                     Swift.print("🛑 [ChatVM] User stopped retrieval mid-task.")
                     isAssistantTyping = false
+                    isUserStopping = false
                     return
                 }
                 
