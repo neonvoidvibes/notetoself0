@@ -257,5 +257,8 @@ final class ChatViewModel: ObservableObject {
         sessionStart = Date()
         messages.removeAll()
         loadMessages()
+        if messages.isEmpty {
+            sendInitialHiddenMessage()
+        }
     }
 }
