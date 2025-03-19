@@ -56,6 +56,7 @@ struct OverviewView: View {
                 }
                 
                 MonthCalendarView(baseDate: currentMonth)
+                    .id(currentMonth)
                     .transition(.slide)
                     .contentShape(Rectangle())
                     .gesture(
