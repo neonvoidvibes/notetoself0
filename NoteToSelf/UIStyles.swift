@@ -26,8 +26,8 @@ struct UIStyles {
     
     // MARK: - Chat UI Colors and Styles
     static let chatBackground = Color(hex: "#000000")
-    // Define chat input container and field backgrounds
-    static let chatInputContainerBackground = Color(hex: "#555555")
+    // Define chat input container background color
+    static let chatInputContainerBackground = Color(hex: "#313131")
     static let chatInputContainerCornerRadius: CGFloat = 12
     static let chatInputFieldBackground = chatInputContainerBackground
     // Update chat bubble colors per new spec

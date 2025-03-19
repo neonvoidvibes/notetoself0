@@ -8,21 +8,14 @@ final class ChatViewModel: ObservableObject {
     @Published var isUserStopping: Bool = false
     @Published var messages: [ChatMessageEntity] = []
     
-    // We use the app's shared Core Data context
     private let context = PersistenceController.shared.container.viewContext
-    
-    // GPT-4 chat service
     private let chatService = GPT4ChatService.shared
-    
-    // Journal retrieval agent
     private let journalRetrievalAgent: JournalRetrievalAgent
     
-    // The Chat agent's system prompt is a combo of basePrompt + chatAgentPrompt
     private let chatAgentSystemPrompt: String = {
         return SystemPrompts.basePrompt + "\n\n" + SystemPrompts.chatAgentPrompt
     }()
     
-    // sessionStart is used for clearing conversation
     private var sessionStart: Date {
         get {
             if let stored = UserDefaults.standard.object(forKey: "ChatSessionStart") as? Date {
@@ -38,7 +31,7 @@ final class ChatViewModel: ObservableObject {
     }
     
     init() {
-        Swift.print("🚀 [ChatVM] Initializing ChatViewModel (multi-agent)...")
+        Swift.print("🚀 [ChatVM] Initializing ChatViewModel...")
         self.journalRetrievalAgent = JournalRetrievalAgent(context: context)
         loadMessages()
     }
@@ -49,9 +42,9 @@ final class ChatViewModel: ObservableObject {
         request.sortDescriptors = [NSSortDescriptor(key: "timestamp", ascending: true)]
         do {
             messages = try context.fetch(request)
-            Swift.print("✅ [ChatVM] Loaded \(messages.count) messages (since sessionStart).")
+            Swift.print("✅ [ChatVM] Loaded \(messages.count) messages.")
             if messages.isEmpty {
-                Swift.print("💬 [ChatVM] No messages found, sending hidden user message to prompt assistant.")
+                Swift.print("💬 [ChatVM] No messages found, sending initial hidden message.")
                 sendInitialHiddenMessage()
             }
         } catch {
@@ -59,7 +52,6 @@ final class ChatViewModel: ObservableObject {
         }
     }
     
-    // user tapped Send
     func sendMessage(_ userText: String) {
         guard !isUserStopping else { return }
         Swift.print("📝 [ChatVM] Received user message: \(userText)")
@@ -72,7 +64,6 @@ final class ChatViewModel: ObservableObject {
         saveContext()
         messages.append(userEntry)
         
-        // Check if we might need to do a retrieval
         handleUserMessage(userText)
     }
     
@@ -80,10 +71,8 @@ final class ChatViewModel: ObservableObject {
         let lowered = userText.lowercased()
         if lowered.contains("journal") || lowered.contains("data") || lowered.contains("lately") ||
            lowered.contains("recent") || lowered.contains("all") {
-            // attempt handoff to the retrieval agent
             handOffToJournalRetrieval(query: userText)
         } else {
-            // no retrieval needed, proceed with normal chat
             proceedWithChat(userText, hiddenJournal: nil)
         }
     }
@@ -92,38 +81,37 @@ final class ChatViewModel: ObservableObject {
         guard !isUserStopping else { return }
         Swift.print("🔎 [ChatVM] Handing off to JournalRetrievalAgent with query: \(query)")
         
-        // 1) Insert a quick assistant message acknowledging the request
-        let confirmingEntry = ChatMessageEntity(context: context)
-        confirmingEntry.id = UUID()
-        confirmingEntry.role = "assistant"
-        confirmingEntry.timestamp = Date()
-        confirmingEntry.content = "Sure, I'll retrieve that. One moment..."
-        saveContext()
-        messages.append(confirmingEntry)
-        
-        // 2) Show loading dot while retrieval happens
+        // 1) Generate a unique confirmation message via LLM
         isAssistantTyping = true
-        
         Task {
             do {
-                // short delay for demonstration
+                let confirmPrompt = "Please confirm: Retrieve journal entries for: \(query)"
+                let confirmReply = try await chatService.sendMessage(systemPrompt: chatAgentSystemPrompt, userMessage: confirmPrompt)
+                let confirmEntry = ChatMessageEntity(context: context)
+                confirmEntry.id = UUID()
+                confirmEntry.content = confirmReply
+                confirmEntry.role = "assistant"
+                confirmEntry.timestamp = Date()
+                saveContext()
+                messages.append(confirmEntry)
+            } catch {
+                Swift.print("❌ [ChatVM] Confirmation error: \(error.localizedDescription)")
+            }
+        }
+        
+        // 2) Proceed with retrieval after a short delay, showing loading dot
+        Task {
+            do {
                 try await Task.sleep(nanoseconds: 300_000_000)
-                
                 if isUserStopping {
                     Swift.print("🛑 [ChatVM] User stopped retrieval mid-task.")
                     isAssistantTyping = false
                     return
                 }
-                
                 let fetchedData = journalRetrievalAgent.fetchJournalData(query: query)
                 Swift.print("🔎 [ChatVM] Journal data fetched, length: \(fetchedData.count)")
-                
-                // hide loading dot
                 isAssistantTyping = false
-                
-                // proceed with normal chat, passing fetched data as hidden context
                 proceedWithChat(query, hiddenJournal: fetchedData)
-                
             } catch {
                 Swift.print("❌ [ChatVM] Retrieval agent error: \(error)")
                 isAssistantTyping = false
@@ -133,10 +121,9 @@ final class ChatViewModel: ObservableObject {
     
     private func proceedWithChat(_ userMessage: String, hiddenJournal: String?) {
         guard !isUserStopping else { return }
-        // Build conversation context
         isAssistantTyping = true
         let chatHistoryContext = buildChatContext(for: messages, hiddenJournal: hiddenJournal)
-        Swift.print("📜 [ChatVM] Sending conversation context to GPT-4:")
+        Swift.print("📜 [ChatVM] Sending context to GPT-4:")
         
         Task {
             do {
@@ -145,7 +132,7 @@ final class ChatViewModel: ObservableObject {
                     userMessage: chatHistoryContext
                 )
                 if isUserStopping {
-                    Swift.print("🛑 [ChatVM] Stopped after chat request returned, discarding reply.")
+                    Swift.print("🛑 [ChatVM] Stopped after chat request returned.")
                     isAssistantTyping = false
                     return
                 }
@@ -171,17 +158,14 @@ final class ChatViewModel: ObservableObject {
     private func buildChatContext(for existingMessages: [ChatMessageEntity],
                                   hiddenJournal: String?) -> String {
         var lines: [String] = []
-        
         for msg in existingMessages {
             let roleLabel = (msg.role ?? "user").capitalized
             let content = msg.content ?? ""
             lines.append("\(roleLabel): \(content)")
         }
-        
         if let hidden = hiddenJournal {
             lines.append("System: The user also has these journal entries:\n\(hidden)")
         }
-        
         return lines.joined(separator: "\n")
     }
     
@@ -202,10 +186,9 @@ final class ChatViewModel: ObservableObject {
                 assistantEntry.timestamp = Date()
                 saveContext()
                 messages.append(assistantEntry)
-                
                 isAssistantTyping = false
             } catch {
-                Swift.print("❌ [ChatVM] Error sending initial hidden message: \(error.localizedDescription)")
+                Swift.print("❌ [ChatVM] Error sending initial message: \(error.localizedDescription)")
                 isAssistantTyping = false
             }
         }
@@ -214,6 +197,7 @@ final class ChatViewModel: ObservableObject {
     private func saveContext() {
         do {
             try context.save()
+            Swift.print("💾 [ChatVM] Context saved successfully")
         } catch {
             Swift.print("❌ [ChatVM] Failed to save context: \(error.localizedDescription)")
         }
@@ -225,14 +209,12 @@ final class ChatViewModel: ObservableObject {
         loadMessages()
     }
     
-    /// Called when user presses "Stop"
     func userStop() {
         Swift.print("🛑 [ChatVM] userStop invoked.")
         isUserStopping = true
         isAssistantTyping = false
     }
     
-    /// Called once we've confirmed the user wants to resume
     func resetStopState() {
         isUserStopping = false
     }

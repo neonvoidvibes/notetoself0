@@ -4,9 +4,9 @@ struct ChatView: View {
     @StateObject private var viewModel = ChatViewModel()
     @State private var currentInput: String = ""
     
-    // We'll define some animation states if needed (like for textFlowAnimation).
+    // We'll define some animation states if needed.
     @State private var textFlowAnimation: Bool = false
-    
+
     var body: some View {
         VStack(spacing: 0) {
             // Top toolbar row with clear conversation button
@@ -71,59 +71,46 @@ struct ChatView: View {
                 .fill(Color.black)
                 .frame(height: 20)
             
-            // Chat input container
+            // Chat input container: always styled consistently using the shared background color.
             HStack(spacing: 8) {
-                if !viewModel.isAssistantTyping {
-                    // Normal text editor + send button
-                    TextEditor(text: $currentInput)
-                        .font(UIStyles.bodyFont)
-                        .foregroundColor(.white)
-                        .accentColor(UIStyles.accentColor)
-                        .scrollContentBackground(.hidden)
-                        .cornerRadius(UIStyles.defaultCornerRadius)
-                        .frame(minHeight: 50, maxHeight: 120)
-                    
-                    Button(action: {
+                TextEditor(text: viewModel.isAssistantTyping ? .constant("") : $currentInput)
+                    .font(UIStyles.bodyFont)
+                    .foregroundColor(viewModel.isAssistantTyping ? .gray : .white)
+                    .accentColor(UIStyles.accentColor)
+                    .scrollContentBackground(.hidden)
+                    .cornerRadius(UIStyles.defaultCornerRadius)
+                    .frame(minHeight: 50, maxHeight: 120)
+                    .disabled(viewModel.isAssistantTyping)
+                
+                Button(action: {
+                    if viewModel.isAssistantTyping {
+                        viewModel.userStop()
+                    } else {
                         let trimmed = currentInput.trimmingCharacters(in: .whitespacesAndNewlines)
                         guard !trimmed.isEmpty else { return }
                         viewModel.sendMessage(trimmed)
                         currentInput = ""
-                    }) {
+                    }
+                }) {
+                    if viewModel.isAssistantTyping {
+                        Image(systemName: "stop.fill")
+                            .font(Font.system(size: 26, weight: .bold))
+                            .foregroundColor(.white)
+                    } else {
                         Image(systemName: "arrow.up")
                             .font(Font.system(size: 26, weight: .bold))
                             .foregroundColor(Color(hex: "#000000"))
                     }
-                    .frame(width: 40, height: 40)
-                    .background(Color.white)
-                    .clipShape(Circle())
-                    .padding(.bottom, UIStyles.globalHorizontalPadding)
-                } else {
-                    // "Stop" button replaces send, user can't input text
-                    TextEditor(text: .constant(""))
-                        .font(UIStyles.bodyFont)
-                        .foregroundColor(.gray)
-                        .disabled(true)
-                        .frame(minHeight: 50, maxHeight: 120)
-                        .opacity(0.3)
-                    
-                    Button(action: {
-                        // user stops
-                        viewModel.userStop()
-                    }) {
-                        Image(systemName: "stop.fill")
-                            .font(Font.system(size: 26, weight: .bold))
-                            .foregroundColor(.white)
-                    }
-                    .frame(width: 40, height: 40)
-                    .background(Color.red)
-                    .clipShape(Circle())
-                    .padding(.bottom, UIStyles.globalHorizontalPadding)
                 }
+                .frame(width: 40, height: 40)
+                .background(viewModel.isAssistantTyping ? UIStyles.chatInputContainerBackground : Color.white)
+                .clipShape(Circle())
+                .padding(.bottom, UIStyles.globalHorizontalPadding)
             }
             .padding(.horizontal, UIStyles.globalHorizontalPadding)
             .padding(.vertical, 16)
             .padding(.bottom, 16)
-            .background(Color(hex: "#313131"))
+            .background(UIStyles.chatInputContainerBackground)
             .cornerRadius(UIStyles.chatInputContainerCornerRadius * 3)
         }
         .background(UIStyles.chatBackground.edgesIgnoringSafeArea(.all))
@@ -132,7 +119,7 @@ struct ChatView: View {
 
 struct ChatMessageBubble: View {
     let message: ChatMessageEntity
-    
+
     var body: some View {
         HStack {
             if message.role == "assistant" {
