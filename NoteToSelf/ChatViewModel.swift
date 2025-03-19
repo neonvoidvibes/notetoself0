@@ -12,7 +12,10 @@ final class ChatViewModel: ObservableObject {
     private let chatService = GPT4ChatService.shared
     
     private let chatAgentSystemPrompt: String = {
-        return SystemPrompts.basePrompt + "\n\n" + SystemPrompts.chatAgentPrompt
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy-MM-dd"
+        let today = formatter.string(from: Date())
+        return SystemPrompts.basePrompt + "\n\n" + SystemPrompts.chatAgentPrompt + "\n\nAssume today's date is \(today)."
     }()
     
     /// The session start date, stored in UserDefaults so that clearing the conversation resets it.
