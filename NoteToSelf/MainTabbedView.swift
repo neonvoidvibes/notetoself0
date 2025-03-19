@@ -70,7 +70,7 @@ struct MainTabbedView: View {
                                     ChatView()
                                 }
                             }
-                            .padding(.top, 64)
+                            .padding(.top, 16)
                             .frame(maxWidth: .infinity, maxHeight: .infinity)
                         }
                         .background(UIStyles.appBackground.ignoresSafeArea())

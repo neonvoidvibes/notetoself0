@@ -19,7 +19,7 @@ struct ChatView: View {
                 Spacer()
             }
             .padding(.horizontal, UIStyles.globalHorizontalPadding)
-            .padding(.vertical, 8)
+            .padding(.vertical, 16)
             
             ScrollViewReader { scrollProxy in
                 ScrollView {
@@ -77,6 +77,7 @@ struct ChatView: View {
                 .frame(width: 40, height: 40)
                 .background(Color.white)
                 .clipShape(Circle())
+                .padding(.bottom, UIStyles.globalHorizontalPadding)
             }
             .padding(.horizontal, UIStyles.globalHorizontalPadding)
             .padding(.vertical, 16)
