@@ -157,22 +157,31 @@ final class ChatViewModel: ObservableObject {
                 // Attempt to parse JSON for retrieval instructions
                 let (shouldRetrieve, retrievalQuery) = parseAssistantReply(reply)
 
-                // Save the GPT-4 reply as an assistant message
-                let assistantEntry = ChatMessageEntity(context: context)
-                assistantEntry.id = UUID()
-                assistantEntry.content = reply
-                assistantEntry.role = "assistant"
-                assistantEntry.timestamp = Date()
-                saveContext()
-                messages.append(assistantEntry)
+                if shouldRetrieve, let query = retrievalQuery {
+                    // Instead of showing raw JSON, display a confirmation message to the user.
+                    let confirmation = "Please hold on a moment while I retrieve your data."
+                    let assistantEntry = ChatMessageEntity(context: context)
+                    assistantEntry.id = UUID()
+                    assistantEntry.content = confirmation
+                    assistantEntry.role = "assistant"
+                    assistantEntry.timestamp = Date()
+                    saveContext()
+                    messages.append(assistantEntry)
+                    Swift.print("💾 [ChatVM] Saved confirmation message. Total messages: \(messages.count)")
+                    handOffToJournalRetrieval(query: query)
+                } else {
+                    // Normal case: display the GPT-4 reply as is.
+                    let assistantEntry = ChatMessageEntity(context: context)
+                    assistantEntry.id = UUID()
+                    assistantEntry.content = reply
+                    assistantEntry.role = "assistant"
+                    assistantEntry.timestamp = Date()
+                    saveContext()
+                    messages.append(assistantEntry)
+                    Swift.print("💾 [ChatVM] Saved assistant message. Total messages: \(messages.count)")
+                }
 
                 isAssistantTyping = false
-                Swift.print("💾 [ChatVM] Saved assistant message. Total messages: \(messages.count)")
-
-                // If GPT-4 wants retrieval, hand off to JournalRetrievalAgent with the indicated query
-                if shouldRetrieve, let query = retrievalQuery {
-                    handOffToJournalRetrieval(query: query)
-                }
 
             } catch {
                 Swift.print("❌ [ChatVM] GPT-4 error: \(error.localizedDescription)")
