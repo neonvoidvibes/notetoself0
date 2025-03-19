@@ -10,7 +10,6 @@ final class ChatViewModel: ObservableObject {
 
     init() {
         print("🚀 [ChatVM] Initializing ChatViewModel...")
-        print("🚀 [ChatVM] Initializing ChatViewModel...")
         loadMessages()
     }
 
@@ -20,14 +19,12 @@ final class ChatViewModel: ObservableObject {
         do {
             messages = try context.fetch(request)
             print("✅ [ChatVM] Loaded \(messages.count) messages from Core Data")
-            print("✅ [ChatVM] Loaded \(messages.count) messages from Core Data")
-            print("❌ [ChatVM] Failed to load messages: \(error.localizedDescription)")
-            print("❌ [ChatVM] Failed to load messages: \(error.localizedDescription)")
+        } catch let fetchErr {
+            print("❌ [ChatVM] Failed to load messages: \(fetchErr.localizedDescription)")
         }
     }
 
     func sendMessage(_ userMessage: String) {
-        print("📝 [ChatVM] Received user message: \(userMessage)")
         print("📝 [ChatVM] Received user message: \(userMessage)")
         // Save user message
         let userEntry = ChatMessageEntity(context: context)
@@ -39,14 +36,18 @@ final class ChatViewModel: ObservableObject {
         messages.append(userEntry)
         print("💾 [ChatVM] Saved user message locally. Total messages: \(messages.count)")
 
+        // Construct conversation context from all messages
+        let conversationContext = messages.map { message -> String in
+            let roleLabel = (message.role ?? "User").capitalized
+            return "\(roleLabel): \(message.content ?? "")"
+        }.joined(separator: "\n")
+        print("📜 [ChatVM] Sending conversation context:\n\(conversationContext)")
 
-        // Call GPT-4o and save assistant reply
+        // Call GPT-4o with full conversation history
         Task {
             do {
-                print("🤖 [ChatVM] Sending message to GPT-4o...")
-                print("🤖 [ChatVM] Sending message to GPT-4o...")
-                print("🤖 [ChatVM] Received GPT-4o reply: \(reply)")
-                let reply = try await chatService.sendMessage(systemPrompt: SystemPrompts.defaultPrompt, userMessage: userMessage)
+                print("🤖 [ChatVM] Sending conversation context to GPT-4o...")
+                let reply = try await chatService.sendMessage(systemPrompt: SystemPrompts.defaultPrompt, userMessage: conversationContext)
                 print("🤖 [ChatVM] Received GPT-4o reply: \(reply)")
                 let assistantEntry = ChatMessageEntity(context: context)
                 assistantEntry.id = UUID()
@@ -56,9 +57,8 @@ final class ChatViewModel: ObservableObject {
                 saveContext()
                 messages.append(assistantEntry)
                 print("💾 [ChatVM] Saved assistant message locally. Total messages: \(messages.count)")
-                print("💾 [ChatVM] Saved assistant message locally. Total messages: \(messages.count)")
-                print("❌ [ChatVM] Error calling GPT-4o: \(error.localizedDescription)")
-                print("❌ [ChatVM] Error calling GPT-4o: \(error.localizedDescription)")
+            } catch let serviceErr {
+                print("❌ [ChatVM] Error calling GPT-4o: \(serviceErr.localizedDescription)")
             }
         }
     }
@@ -67,9 +67,8 @@ final class ChatViewModel: ObservableObject {
         do {
             try context.save()
             print("💾 [ChatVM] Context saved successfully")
-            print("💾 [ChatVM] Context saved successfully")
-            print("❌ [ChatVM] Failed to save context: \(error.localizedDescription)")
-            print("❌ [ChatVM] Failed to save context: \(error.localizedDescription)")
+        } catch let saveErr {
+            print("❌ [ChatVM] Failed to save context: \(saveErr.localizedDescription)")
         }
     }
 }
