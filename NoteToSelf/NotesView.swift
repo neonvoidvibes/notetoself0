@@ -11,11 +11,11 @@ struct NotesView: View {
     @State private var expandedEntry: NSManagedObjectID? = nil
     @State private var showNewEntryView = false
     
-    // Draft text & mood
+    // Draft text & mood for new entry
     @State private var draftNoteText: String = ""
     @State private var draftMood: String = "Neutral"
     
-    // State variable for entry pending deletion
+    // State for entry pending deletion
     @State private var entryToDelete: JournalEntryEntity? = nil
     
     var body: some View {
@@ -44,6 +44,8 @@ struct NotesView: View {
                         ForEach(entries) { entry in
                             EntryAccordionView(entry: entry, isExpanded: expandedEntry == entry.objectID)
                                 .id(entry.objectID)
+                                .listRowInsets(EdgeInsets())
+                                .listRowBackground(Color.clear)
                                 .onTapGesture {
                                     withAnimation {
                                         if expandedEntry == entry.objectID {
