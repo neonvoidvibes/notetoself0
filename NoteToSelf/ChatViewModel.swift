@@ -71,4 +71,9 @@ final class ChatViewModel: ObservableObject {
             print("❌ [ChatVM] Failed to save context: \(saveErr.localizedDescription)")
         }
     }
+    
+    func clearConversation() {
+        // For now, just remove all messages from memory, do not remove from store.
+        messages.removeAll()
+    }
 }

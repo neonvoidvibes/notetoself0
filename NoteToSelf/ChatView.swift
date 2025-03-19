@@ -3,9 +3,24 @@ import SwiftUI
 struct ChatView: View {
     @StateObject private var viewModel = ChatViewModel()
     @State private var currentInput: String = ""
+    @State private var hasInitiallyLoaded = false
     
     var body: some View {
         VStack(spacing: 0) {
+            // Top toolbar row with square.and.pencil to clear conversation
+            HStack {
+                Button {
+                    viewModel.clearConversation()
+                } label: {
+                    Image(systemName: "square.and.pencil")
+                        .font(.system(size: 28))
+                        .foregroundColor(UIStyles.offWhite)
+                }
+                Spacer()
+            }
+            .padding(.horizontal, UIStyles.globalHorizontalPadding)
+            .padding(.vertical, 8)
+            
             ScrollViewReader { scrollProxy in
                 ScrollView {
                     ForEach(viewModel.messages, id: \.id) { message in
@@ -13,7 +28,19 @@ struct ChatView: View {
                             .id(message.id)
                     }
                 }
+                .onAppear {
+                    // Scroll to bottom on first appear only
+                    if !hasInitiallyLoaded {
+                        hasInitiallyLoaded = true
+                        if let lastID = viewModel.messages.last?.id {
+                            withAnimation {
+                                scrollProxy.scrollTo(lastID, anchor: .bottom)
+                            }
+                        }
+                    }
+                }
                 .onChange(of: viewModel.messages.count) { _, _ in
+                    // Always scroll to bottom when new messages are appended
                     if let lastID = viewModel.messages.last?.id {
                         withAnimation {
                             scrollProxy.scrollTo(lastID, anchor: .bottom)
@@ -21,10 +48,12 @@ struct ChatView: View {
                     }
                 }
             }
+            
             // Add black margin between chat bubbles and the input container
             Rectangle()
                 .fill(Color.black)
                 .frame(height: 20)
+            
             // Chat input container with extended height, increased padding, and more rounded corners
             HStack(spacing: 8) {
                 TextEditor(text: $currentInput)
@@ -34,6 +63,7 @@ struct ChatView: View {
                     .scrollContentBackground(.hidden)
                     .cornerRadius(UIStyles.defaultCornerRadius)
                     .frame(minHeight: 50, maxHeight: 120)
+                
                 Button(action: {
                     let trimmed = currentInput.trimmingCharacters(in: .whitespacesAndNewlines)
                     guard !trimmed.isEmpty else { return }
