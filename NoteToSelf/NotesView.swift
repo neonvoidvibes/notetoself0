@@ -15,6 +15,9 @@ struct NotesView: View {
     @State private var draftNoteText: String = ""
     @State private var draftMood: String = "Neutral"
     
+    // State variable for entry pending deletion
+    @State private var entryToDelete: JournalEntryEntity? = nil
+    
     var body: some View {
         UIStyles.CustomZStack {
             VStack(alignment: .leading, spacing: 20) {
@@ -37,25 +40,30 @@ struct NotesView: View {
                 }
                 
                 ScrollViewReader { proxy in
-                    ScrollView {
-                        LazyVStack(spacing: 12) {
-                            ForEach(entries) { entry in
-                                EntryAccordionView(entry: entry, isExpanded: expandedEntry == entry.objectID)
-                                    .id(entry.objectID)
-                                    .onTapGesture {
-                                        withAnimation {
-                                            if expandedEntry == entry.objectID {
-                                                expandedEntry = nil
-                                            } else {
-                                                expandedEntry = entry.objectID
-                                                proxy.scrollTo(entry.objectID, anchor: .bottom)
-                                            }
+                    List {
+                        ForEach(entries) { entry in
+                            EntryAccordionView(entry: entry, isExpanded: expandedEntry == entry.objectID)
+                                .id(entry.objectID)
+                                .onTapGesture {
+                                    withAnimation {
+                                        if expandedEntry == entry.objectID {
+                                            expandedEntry = nil
+                                        } else {
+                                            expandedEntry = entry.objectID
+                                            proxy.scrollTo(entry.objectID, anchor: .bottom)
                                         }
                                     }
-                            }
+                                }
+                                .swipeActions(edge: .trailing) {
+                                    Button(role: .destructive) {
+                                        entryToDelete = entry
+                                    } label: {
+                                        Text("Delete")
+                                    }
+                                }
                         }
-                        .padding(.bottom, 20)
                     }
+                    .listStyle(PlainListStyle())
                 }
             }
         }
@@ -76,6 +84,23 @@ struct NotesView: View {
                 draftNoteText = ""
                 draftMood = "Neutral"
             }
+        }
+        .alert(item: $entryToDelete) { entry in
+            Alert(
+                title: Text("Delete Entry?"),
+                message: Text("Are you sure you want to delete this journal entry? This action cannot be undone."),
+                primaryButton: .destructive(Text("Delete")) {
+                    moc.delete(entry)
+                    do {
+                        try moc.save()
+                    } catch {
+                        print("Failed to delete entry: \(error)")
+                    }
+                },
+                secondaryButton: .cancel {
+                    entryToDelete = nil
+                }
+            )
         }
     }
 }
