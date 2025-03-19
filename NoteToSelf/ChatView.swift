@@ -4,10 +4,10 @@ struct ChatView: View {
     @StateObject private var viewModel = ChatViewModel()
     @State private var currentInput: String = ""
     @State private var hasInitiallyLoaded = false
-    
+
     var body: some View {
         VStack(spacing: 0) {
-            // Top toolbar row
+            // Top toolbar row with clear conversation button
             HStack {
                 Button {
                     viewModel.clearConversation()
@@ -21,7 +21,7 @@ struct ChatView: View {
             .padding(.horizontal, UIStyles.globalHorizontalPadding)
             .padding(.vertical, 16)
             
-            // Chat messages with auto-scroll including loading dot
+            // Chat messages with auto-scroll and loading dot
             ScrollViewReader { scrollProxy in
                 ScrollView {
                     ForEach(viewModel.messages, id: \.id) { message in
@@ -34,7 +34,9 @@ struct ChatView: View {
                             UIStyles.assistantLoadingIndicator
                             Spacer()
                         }
-                        .padding(16)
+                        .padding(.leading, 24)
+                        .padding(.trailing, 16)
+                        .padding(.vertical, 24)
                     }
                     // Invisible anchor to scroll to
                     Color.clear
@@ -65,7 +67,7 @@ struct ChatView: View {
                 .fill(Color.black)
                 .frame(height: 20)
             
-            // Chat input container
+            // Chat input container with text editor and send button
             HStack(spacing: 8) {
                 TextEditor(text: $currentInput)
                     .font(UIStyles.bodyFont)
@@ -100,12 +102,6 @@ struct ChatView: View {
     }
 }
 
-struct ChatView_Previews: PreviewProvider {
-    static var previews: some View {
-        ChatView()
-    }
-}
-
 struct ChatMessageBubble: View {
     let message: ChatMessageEntity
 
@@ -116,7 +112,8 @@ struct ChatMessageBubble: View {
                     Text(message.content ?? "")
                         .font(UIStyles.chatFont)
                         .foregroundColor(.white)
-                        .padding()
+                        .padding([.top, .trailing, .bottom], 16)
+                        .padding(.leading, 0)
                         .background(Color.clear)
                         .clipShape(UIStyles.ChatBubbleShape(isUser: false))
                     Spacer()
@@ -135,5 +132,11 @@ struct ChatMessageBubble: View {
         }
         .padding(.horizontal)
         .padding(.vertical, 4)
+    }
+}
+
+struct ChatView_Previews: PreviewProvider {
+    static var previews: some View {
+        ChatView()
     }
 }

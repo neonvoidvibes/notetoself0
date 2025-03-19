@@ -40,8 +40,8 @@ final class ChatViewModel: ObservableObject {
                 print("💬 [ChatVM] No messages found, sending hidden user message to prompt assistant.")
                 sendInitialHiddenMessage()
             }
-        } catch let fetchErr {
-            print("❌ [ChatVM] Failed to load messages: \\(fetchErr.localizedDescription)")
+        } catch {
+            print("❌ [ChatVM] Failed to load messages: \(error.localizedDescription)")
         }
     }
 
@@ -112,8 +112,8 @@ final class ChatViewModel: ObservableObject {
                 messages.append(assistantEntry)
                 print("💾 [ChatVM] Saved initial assistant message locally. Total messages: \\(messages.count)")
                 isAssistantTyping = false
-            } catch let serviceErr {
-                print("❌ [ChatVM] Error sending initial hidden message: \\(serviceErr.localizedDescription)")
+            } catch {
+                print("❌ [ChatVM] Error sending initial hidden message: \(error.localizedDescription)")
                 isAssistantTyping = false
             }
         }
