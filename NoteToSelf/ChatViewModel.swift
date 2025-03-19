@@ -32,9 +32,14 @@ final class ChatViewModel: ObservableObject {
         request.sortDescriptors = [NSSortDescriptor(key: "timestamp", ascending: true)]
         do {
             messages = try context.fetch(request)
-            print("✅ [ChatVM] Loaded \(messages.count) messages from Core Data (since sessionStart)")
+            print("✅ [ChatVM] Loaded \\(messages.count) messages from Core Data (since sessionStart)")
+            // If empty, send hidden user message to prompt the assistant's welcome
+            if messages.isEmpty {
+                print("💬 [ChatVM] No messages found, sending hidden user message to prompt assistant.")
+                sendInitialHiddenMessage()
+            }
         } catch let fetchErr {
-            print("❌ [ChatVM] Failed to load messages: \(fetchErr.localizedDescription)")
+            print("❌ [ChatVM] Failed to load messages: \\(fetchErr.localizedDescription)")
         }
     }
 
@@ -86,9 +91,30 @@ final class ChatViewModel: ObservableObject {
         }
     }
     
+    func sendInitialHiddenMessage() {
+        Task {
+            do {
+                // Send a hidden user message ("init") to prompt the assistant's welcome reply.
+                let reply = try await chatService.sendMessage(systemPrompt: SystemPrompts.defaultPrompt, userMessage: "init")
+                print("🤖 [ChatVM] Received initial assistant reply: \(reply)")
+                let assistantEntry = ChatMessageEntity(context: context)
+                assistantEntry.id = UUID()
+                assistantEntry.content = reply
+                assistantEntry.role = "assistant"
+                assistantEntry.timestamp = Date()
+                saveContext()
+                messages.append(assistantEntry)
+                print("💾 [ChatVM] Saved initial assistant message locally. Total messages: \(messages.count)")
+            } catch let serviceErr {
+                print("❌ [ChatVM] Error sending initial hidden message: \(serviceErr.localizedDescription)")
+            }
+        }
+    }
+    
     func clearConversation() {
         // Update sessionStart to current time to hide previous messages from future fetches.
         sessionStart = Date()
         messages.removeAll()
+        loadMessages()
     }
 }
