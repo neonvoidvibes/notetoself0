@@ -224,7 +224,7 @@ struct BreathingAnimation: ViewModifier {
             .scaleEffect(scale)
             .opacity(Double(2.0 - scale))
             .onAppear {
-                withAnimation(Animation.easeInOut(duration: 1.0).repeatForever(autoreverses: true)) {
+                withAnimation(Animation.easeInOut(duration: 0.5).repeatForever(autoreverses: true)) {
                     scale = 1.2
                 }
             }
@@ -235,7 +235,7 @@ extension UIStyles {
     static var assistantLoadingIndicator: some View {
         Circle()
             .fill(offWhite)
-            .frame(width: 10, height: 10)
+            .frame(width: 20, height: 20)
             .modifier(BreathingAnimation())
     }
 }

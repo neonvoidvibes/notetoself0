@@ -4,6 +4,8 @@ import SwiftUI
 
 @MainActor
 final class ChatViewModel: ObservableObject {
+    @Published var isAssistantTyping: Bool = false
+    
     private var sessionStart: Date {
         get {
             if let stored = UserDefaults.standard.object(forKey: "ChatSessionStart") as? Date {
@@ -44,8 +46,10 @@ final class ChatViewModel: ObservableObject {
     }
 
     func sendMessage(_ userMessage: String) {
-        print("📝 [ChatVM] Received user message: \(userMessage)")
+        print("📝 [ChatVM] Received user message: \\(userMessage)")
         // Save user message
+        // Mark assistant as typing
+        isAssistantTyping = true
         let userEntry = ChatMessageEntity(context: context)
         userEntry.id = UUID()
         userEntry.content = userMessage
@@ -75,7 +79,8 @@ final class ChatViewModel: ObservableObject {
                 assistantEntry.timestamp = Date()
                 saveContext()
                 messages.append(assistantEntry)
-                print("💾 [ChatVM] Saved assistant message locally. Total messages: \(messages.count)")
+                print("💾 [ChatVM] Saved assistant message locally. Total messages: \\(messages.count)")
+                isAssistantTyping = false
             } catch let serviceErr {
                 print("❌ [ChatVM] Error calling GPT-4o: \(serviceErr.localizedDescription)")
             }
@@ -93,6 +98,7 @@ final class ChatViewModel: ObservableObject {
     
     func sendInitialHiddenMessage() {
         Task {
+            isAssistantTyping = true
             do {
                 // Send a hidden user message ("init") to prompt the assistant's welcome reply.
                 let reply = try await chatService.sendMessage(systemPrompt: SystemPrompts.defaultPrompt, userMessage: "init")
@@ -104,9 +110,11 @@ final class ChatViewModel: ObservableObject {
                 assistantEntry.timestamp = Date()
                 saveContext()
                 messages.append(assistantEntry)
-                print("💾 [ChatVM] Saved initial assistant message locally. Total messages: \(messages.count)")
+                print("💾 [ChatVM] Saved initial assistant message locally. Total messages: \\(messages.count)")
+                isAssistantTyping = false
             } catch let serviceErr {
-                print("❌ [ChatVM] Error sending initial hidden message: \(serviceErr.localizedDescription)")
+                print("❌ [ChatVM] Error sending initial hidden message: \\(serviceErr.localizedDescription)")
+                isAssistantTyping = false
             }
         }
     }

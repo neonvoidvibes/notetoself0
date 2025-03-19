@@ -27,6 +27,14 @@ struct ChatView: View {
                         ChatMessageBubble(message: message)
                             .id(message.id)
                     }
+                    // If assistant is typing, show the breathing dot bubble
+                    if viewModel.isAssistantTyping {
+                        HStack {
+                            UIStyles.assistantLoadingIndicator
+                            Spacer()
+                        }
+                        .padding(32)
+                    }
                 }
                 .onAppear {
                     // Scroll to bottom on first appear only
