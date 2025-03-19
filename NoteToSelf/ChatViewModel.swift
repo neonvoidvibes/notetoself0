@@ -5,6 +5,25 @@ import SwiftUI
 @MainActor
 final class ChatViewModel: ObservableObject {
     @Published var isAssistantTyping: Bool = false
+    @Published var isAgentWorking: Bool = false       // new flag for multi-agent tasks
+    @Published var isUserStopping: Bool = false       // user pressed "stop"
+    @Published var messages: [ChatMessageEntity] = []
+    
+    // track a "current status message" for agent tasks
+    @Published var agentStatusMessage: String? = nil
+    
+    private let context = PersistenceController.shared.container.viewContext
+    
+    private let chatService = GPT4ChatService.shared
+    
+    // Agents
+    private let journalRetrievalAgent: JournalRetrievalAgent
+    
+    // The Chat agent's system prompt is the combo of basePrompt + chatAgentPrompt
+    // We store it once.
+    private let chatAgentSystemPrompt: String = {
+        return SystemPrompts.basePrompt + "\n\n" + SystemPrompts.chatAgentPrompt
+    }()
     
     // Marks when user started this session, for clearing conversation
     private var sessionStart: Date {
@@ -20,17 +39,14 @@ final class ChatViewModel: ObservableObject {
             UserDefaults.standard.set(newValue, forKey: "ChatSessionStart")
         }
     }
-    
-    @Published var messages: [ChatMessageEntity] = []
-    private let context = PersistenceController.shared.container.viewContext
-    private let chatService = GPT4ChatService.shared
-    
+
     init() {
-        Swift.print("🚀 [ChatVM] Initializing ChatViewModel...")
+        Swift.print("🚀 [ChatVM] Initializing ChatViewModel (multi-agent)...")
+        // create retrieval agent
+        self.journalRetrievalAgent = JournalRetrievalAgent(context: context)
         loadMessages()
     }
     
-    // Load existing chat messages from Core Data, only from this session onward
     private func loadMessages() {
         let request = NSFetchRequest<ChatMessageEntity>(entityName: "ChatMessageEntity")
         request.predicate = NSPredicate(format: "timestamp >= %@", sessionStart as NSDate)
@@ -47,110 +63,93 @@ final class ChatViewModel: ObservableObject {
         }
     }
     
-    // MARK: - Journal filter structure
-    
-    /// Basic timeframe filter for future expansions (mood filters, text search, etc.)
-    enum JournalTimeframe {
-        case all
-        case since(Date)
-        case dateRange(Date, Date)
-    }
-    
-    struct JournalFilter {
-        var timeframe: JournalTimeframe
-        // Could add more, e.g. moods: [String], textSearch, etc.
-    }
-    
-    /// Fetches journal entries from Core Data based on a filter.
-    private func fetchJournalEntries(with filter: JournalFilter) throws -> [JournalEntryEntity] {
-        let request = NSFetchRequest<JournalEntryEntity>(entityName: "JournalEntryEntity")
-        
-        // Setup sort
-        request.sortDescriptors = [NSSortDescriptor(key: "timestamp", ascending: false)]
-        
-        // Setup predicate based on timeframe
-        switch filter.timeframe {
-        case .all:
-            request.predicate = nil // no time limit
-        case let .since(date):
-            request.predicate = NSPredicate(format: "timestamp >= %@", date as NSDate)
-        case let .dateRange(start, end):
-            request.predicate = NSPredicate(format: "timestamp >= %@ AND timestamp <= %@", start as NSDate, end as NSDate)
-        }
-        
-        // For a v1, we won't do limit unless user specifically asks
-        // request.fetchLimit = ...
-        
-        // Execute fetch
-        return try context.fetch(request)
-    }
-    
-    /// Convert an array of JournalEntryEntity into a text block for GPT usage
-    private func buildJournalEntriesText(_ entries: [JournalEntryEntity]) -> String {
-        if entries.isEmpty {
-            return "No journal entries found."
-        }
-        let lines = entries.map { entry -> String in
-            let dateStr = entry.timestamp?.formatted(date: .numeric, time: .omitted) ?? "Unknown date"
-            let moodStr = entry.mood ?? "N/A"
-            let textStr = entry.text ?? ""
-            return "[\(dateStr)] (\(moodStr)) \(textStr)"
-        }
-        return lines.joined(separator: "\n")
-    }
-    
-    /// Called when user taps 'Send'
+    // user tapped Send
     func sendMessage(_ userText: String) {
+        guard !isUserStopping else { return } // if user pressed stop, ignore new messages
         Swift.print("📝 [ChatVM] Received user message: \(userText)")
         
-        // We'll store the user text exactly as typed, so the user sees it in the chat bubble
-        // BUT we'll keep *hidden* the journal text portion from the user’s bubble
-        let normalized = userText.lowercased()
-        
-        // Check if user wants their journal entries included
-        var hiddenJournalText: String? = nil
-        if normalized.contains("journal entries") || normalized.contains("my journal") {
-            do {
-                // For v1, we fetch "all" unless we add more logic
-                let entries = try fetchJournalEntries(with: JournalFilter(timeframe: .all))
-                let textBlock = buildJournalEntriesText(entries)
-                hiddenJournalText = textBlock
-            } catch {
-                Swift.print("❌ [ChatVM] Error fetching journal entries: \(error.localizedDescription)")
-                hiddenJournalText = "Error reading journal entries."
-            }
-        }
-        
-        // Step 1: Save user’s local ChatMessage
-        // The user’s message content is exactly what they typed—no appended journal data
-        isAssistantTyping = true
         let userEntry = ChatMessageEntity(context: context)
         userEntry.id = UUID()
-        userEntry.content = userText // only the user text
+        userEntry.content = userText
         userEntry.role = "user"
         userEntry.timestamp = Date()
         saveContext()
         messages.append(userEntry)
         
-        Swift.print("💾 [ChatVM] Saved user message locally. Total messages: \(messages.count)")
+        // now check if we might need to do a retrieval
+        handleUserMessage(userText)
+    }
+    
+    private func handleUserMessage(_ userText: String) {
+        // If user references "journal," "lately," "recent," or "all," let's do a retrieval
+        let lowered = userText.lowercased()
+        if lowered.contains("journal") || lowered.contains("data") || lowered.contains("lately") || lowered.contains("recent") || lowered.contains("all") {
+            // attempt handoff to the retrieval agent
+            handOffToJournalRetrieval(query: userText)
+        } else {
+            // no retrieval needed, proceed with normal chat
+            proceedWithChat(userText, hiddenJournal: nil)
+        }
+    }
+    
+    private func handOffToJournalRetrieval(query: String) {
+        guard !isUserStopping else { return }
+        Swift.print("🔎 [ChatVM] Handing off to JournalRetrievalAgent with query: \(query)")
         
-        // Step 2: Build conversation context for GPT
-        // If hiddenJournalText != nil, we’ll add it as “system” or “assistant” in the prompt
-        // so GPT sees that info but the user does not see it appended in the UI
-        let chatHistoryContext = buildChatContext(for: messages, hiddenJournal: hiddenJournalText)
-        Swift.print("📜 [ChatVM] Sending conversation context:\n\(chatHistoryContext)")
+        // show status message
+        agentStatusMessage = "Retrieving journal..."
+        isAgentWorking = true
         
-        // Step 3: Call GPT-4o asynchronously
         Task {
             do {
-                Swift.print("🤖 [ChatVM] Sending conversation context to GPT-4o...")
+                // simulate short delay
+                try await Task.sleep(nanoseconds: 300_000_000)
+                
+                if isUserStopping {
+                    Swift.print("🛑 [ChatVM] User stopped retrieval mid-task.")
+                    isAgentWorking = false
+                    agentStatusMessage = nil
+                    return
+                }
+                
+                let fetchedData = journalRetrievalAgent.fetchJournalData(query: query)
+                Swift.print("🔎 [ChatVM] Journal data fetched, length: \(fetchedData.count)")
+                
+                // we now proceed with normal chat, passing the fetched data as hidden context
+                isAgentWorking = false
+                agentStatusMessage = nil
+                
+                proceedWithChat(query, hiddenJournal: fetchedData)
+                
+            } catch {
+                Swift.print("❌ [ChatVM] Retrieval agent error: \(error)")
+                isAgentWorking = false
+                agentStatusMessage = nil
+            }
+        }
+    }
+    
+    private func proceedWithChat(_ userMessage: String, hiddenJournal: String?) {
+        guard !isUserStopping else { return }
+        // Build conversation context
+        isAssistantTyping = true
+        let chatHistoryContext = buildChatContext(for: messages, hiddenJournal: hiddenJournal)
+        Swift.print("📜 [ChatVM] Sending conversation context:\n\(chatHistoryContext)")
+        
+        Task {
+            do {
+                Swift.print("🤖 [ChatVM] Sending context to GPT-4o with chatAgentPrompt...")
                 let reply = try await chatService.sendMessage(
-                    systemPrompt: SystemPrompts.defaultPrompt,
+                    systemPrompt: chatAgentSystemPrompt,
                     userMessage: chatHistoryContext
                 )
+                if isUserStopping {
+                    Swift.print("🛑 [ChatVM] Stopped after chat request returned, discarding.")
+                    isAssistantTyping = false
+                    return
+                }
                 Swift.print("🤖 [ChatVM] Received GPT-4o reply: \(reply)")
                 
-                // Step 4: Create assistant’s local ChatMessage
                 let assistantEntry = ChatMessageEntity(context: context)
                 assistantEntry.id = UUID()
                 assistantEntry.content = reply
@@ -158,8 +157,8 @@ final class ChatViewModel: ObservableObject {
                 assistantEntry.timestamp = Date()
                 saveContext()
                 messages.append(assistantEntry)
-                Swift.print("💾 [ChatVM] Saved assistant message locally. Total messages: \(messages.count)")
                 isAssistantTyping = false
+                Swift.print("💾 [ChatVM] Saved assistant message locally. Total messages: \(messages.count)")
             } catch {
                 Swift.print("❌ [ChatVM] Error calling GPT-4o: \(error.localizedDescription)")
                 isAssistantTyping = false
@@ -167,15 +166,8 @@ final class ChatViewModel: ObservableObject {
         }
     }
     
-    /// Builds the final text that we send to GPT, incorporating the existing conversation
-    /// plus any hidden journal text (system-level info) if needed.
     private func buildChatContext(for existingMessages: [ChatMessageEntity],
                                   hiddenJournal: String?) -> String {
-        /*
-         We’ll map each ChatMessageEntity to lines: “User: …” or “Assistant: …”
-         Then, if hiddenJournal != nil, we insert it as a “System: …” line
-         so GPT can see the user’s hidden context, but the user does not see it appended.
-        */
         var lines: [String] = []
         
         for msg in existingMessages {
@@ -184,30 +176,19 @@ final class ChatViewModel: ObservableObject {
             lines.append("\(roleLabel): \(content)")
         }
         
-        if let hiddenText = hiddenJournal {
-            // If we want GPT to treat it as system context:
-            lines.append("System: The user also has these journal entries:\n\(hiddenText)")
+        if let hidden = hiddenJournal {
+            lines.append("System: The user also has these journal entries:\n\(hidden)")
         }
         
         return lines.joined(separator: "\n")
     }
     
-    private func saveContext() {
-        do {
-            try context.save()
-            Swift.print("💾 [ChatVM] Context saved successfully")
-        } catch {
-            Swift.print("❌ [ChatVM] Failed to save context: \(error.localizedDescription)")
-        }
-    }
-    
-    /// Called on initial load if no messages exist yet
-    func sendInitialHiddenMessage() {
+    private func sendInitialHiddenMessage() {
         Task {
             isAssistantTyping = true
             do {
                 let reply = try await chatService.sendMessage(
-                    systemPrompt: SystemPrompts.defaultPrompt,
+                    systemPrompt: chatAgentSystemPrompt,
                     userMessage: "init"
                 )
                 Swift.print("🤖 [ChatVM] Received initial assistant reply: \(reply)")
@@ -228,9 +209,32 @@ final class ChatViewModel: ObservableObject {
         }
     }
     
+    private func saveContext() {
+        do {
+            try context.save()
+            Swift.print("💾 [ChatVM] Context saved successfully")
+        } catch {
+            Swift.print("❌ [ChatVM] Failed to save context: \(error.localizedDescription)")
+        }
+    }
+    
     func clearConversation() {
         sessionStart = Date()
         messages.removeAll()
         loadMessages()
+    }
+    
+    /// Called when user presses "Stop"
+    func userStop() {
+        Swift.print("🛑 [ChatVM] userStop invoked.")
+        isUserStopping = true
+        isAssistantTyping = false
+        isAgentWorking = false
+        agentStatusMessage = nil
+    }
+    
+    /// Called once we've confirmed the user wants to resume
+    func resetStopState() {
+        isUserStopping = false
     }
 }
