@@ -7,7 +7,7 @@ struct ChatView: View {
     
     var body: some View {
         VStack(spacing: 0) {
-            // Top toolbar row with square.and.pencil to clear conversation
+            // Top toolbar row
             HStack {
                 Button {
                     viewModel.clearConversation()
@@ -21,48 +21,51 @@ struct ChatView: View {
             .padding(.horizontal, UIStyles.globalHorizontalPadding)
             .padding(.vertical, 16)
             
+            // Chat messages with auto-scroll including loading dot
             ScrollViewReader { scrollProxy in
                 ScrollView {
                     ForEach(viewModel.messages, id: \.id) { message in
                         ChatMessageBubble(message: message)
                             .id(message.id)
                     }
-                    // If assistant is typing, show the breathing dot bubble
+                    // Show assistant loading indicator if assistant is typing
                     if viewModel.isAssistantTyping {
                         HStack {
                             UIStyles.assistantLoadingIndicator
                             Spacer()
                         }
-                        .padding(32)
+                        .padding(16)
                     }
+                    // Invisible anchor to scroll to
+                    Color.clear
+                        .frame(height: 1)
+                        .id("BottomAnchor")
                 }
                 .onAppear {
-                    // Scroll to bottom on first appear only
-                    if !hasInitiallyLoaded {
-                        hasInitiallyLoaded = true
-                        if let lastID = viewModel.messages.last?.id {
-                            withAnimation {
-                                scrollProxy.scrollTo(lastID, anchor: .bottom)
-                            }
-                        }
+                    withAnimation {
+                        scrollProxy.scrollTo("BottomAnchor", anchor: .bottom)
                     }
                 }
-                .onChange(of: viewModel.messages.count) { _, _ in
-                    // Always scroll to bottom when new messages are appended
-                    if let lastID = viewModel.messages.last?.id {
+                .onChange(of: viewModel.messages.count) { oldValue, newValue in
+                    withAnimation {
+                        scrollProxy.scrollTo("BottomAnchor", anchor: .bottom)
+                    }
+                }
+                .onChange(of: viewModel.isAssistantTyping) { oldValue, newValue in
+                    if newValue {
                         withAnimation {
-                            scrollProxy.scrollTo(lastID, anchor: .bottom)
+                            scrollProxy.scrollTo("BottomAnchor", anchor: .bottom)
                         }
                     }
                 }
             }
             
-            // Add black margin between chat bubbles and the input container
+            // Black margin between chat bubbles and the input container
             Rectangle()
                 .fill(Color.black)
                 .frame(height: 20)
             
-            // Chat input container with extended height, increased padding, and more rounded corners
+            // Chat input container
             HStack(spacing: 8) {
                 TextEditor(text: $currentInput)
                     .font(UIStyles.bodyFont)
@@ -97,9 +100,15 @@ struct ChatView: View {
     }
 }
 
+struct ChatView_Previews: PreviewProvider {
+    static var previews: some View {
+        ChatView()
+    }
+}
+
 struct ChatMessageBubble: View {
     let message: ChatMessageEntity
-    
+
     var body: some View {
         HStack {
             if message.role == "assistant" {
@@ -126,11 +135,5 @@ struct ChatMessageBubble: View {
         }
         .padding(.horizontal)
         .padding(.vertical, 4)
-    }
-}
-
-struct ChatView_Previews: PreviewProvider {
-    static var previews: some View {
-        ChatView()
     }
 }
