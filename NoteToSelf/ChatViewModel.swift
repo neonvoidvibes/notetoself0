@@ -5,7 +5,7 @@ import SwiftUI
 @MainActor
 final class ChatViewModel: ObservableObject {
     @Published var isAssistantTyping: Bool = false
-    
+
     private var sessionStart: Date {
         get {
             if let stored = UserDefaults.standard.object(forKey: "ChatSessionStart") as? Date {
@@ -19,59 +19,87 @@ final class ChatViewModel: ObservableObject {
             UserDefaults.standard.set(newValue, forKey: "ChatSessionStart")
         }
     }
+    
     @Published var messages: [ChatMessageEntity] = []
     private let context = PersistenceController.shared.container.viewContext
     private let chatService = GPT4ChatService.shared
 
     init() {
-        print("🚀 [ChatVM] Initializing ChatViewModel...")
+        Swift.print("🚀 [ChatVM] Initializing ChatViewModel...")
         loadMessages()
     }
-
+    
     private func loadMessages() {
         let request = NSFetchRequest<ChatMessageEntity>(entityName: "ChatMessageEntity")
         request.predicate = NSPredicate(format: "timestamp >= %@", sessionStart as NSDate)
         request.sortDescriptors = [NSSortDescriptor(key: "timestamp", ascending: true)]
         do {
             messages = try context.fetch(request)
-            print("✅ [ChatVM] Loaded \\(messages.count) messages from Core Data (since sessionStart)")
-            // If empty, send hidden user message to prompt the assistant's welcome
+            Swift.print("✅ [ChatVM] Loaded \(messages.count) messages from Core Data (since sessionStart)")
             if messages.isEmpty {
-                print("💬 [ChatVM] No messages found, sending hidden user message to prompt assistant.")
+                Swift.print("💬 [ChatVM] No messages found, sending hidden user message to prompt assistant.")
                 sendInitialHiddenMessage()
             }
         } catch {
-            print("❌ [ChatVM] Failed to load messages: \(error.localizedDescription)")
+            Swift.print("❌ [ChatVM] Failed to load messages: \(error.localizedDescription)")
         }
     }
-
+    
+    // Helper: fetch most recent journal entries (limit default to 3)
+    private func fetchLatestEntries(limit: Int = 3) -> String {
+        let request = NSFetchRequest<JournalEntryEntity>(entityName: "JournalEntryEntity")
+        request.sortDescriptors = [NSSortDescriptor(key: "timestamp", ascending: false)]
+        request.fetchLimit = limit
+        do {
+            let results = try context.fetch(request)
+            if results.isEmpty {
+                return "No journal entries found."
+            } else {
+                let lines = results.map { entry -> String in
+                    let dateStr = entry.timestamp?.formatted(date: .numeric, time: .omitted) ?? "Unknown date"
+                    let moodStr = entry.mood ?? "N/A"
+                    let textStr = entry.text ?? ""
+                    return "[\(dateStr)] (\(moodStr)) \(textStr)"
+                }
+                return lines.joined(separator: "\n")
+            }
+        } catch {
+            Swift.print("❌ [ChatVM] Error fetching journal entries: \(error.localizedDescription)")
+            return "Error reading journal entries."
+        }
+    }
+    
     func sendMessage(_ userMessage: String) {
-        print("📝 [ChatVM] Received user message: \\(userMessage)")
-        // Save user message
-        // Mark assistant as typing
+        Swift.print("📝 [ChatVM] Received user message: \(userMessage)")
+        
+        var finalUserMessage = userMessage
+        let normalized = userMessage.lowercased()
+        if normalized.contains("journal entries") || normalized.contains("my journal") {
+            let entriesText = fetchLatestEntries()
+            finalUserMessage += "\n\n[User's recent journal entries]\n\(entriesText)"
+        }
+        
         isAssistantTyping = true
         let userEntry = ChatMessageEntity(context: context)
         userEntry.id = UUID()
-        userEntry.content = userMessage
+        userEntry.content = finalUserMessage
         userEntry.role = "user"
         userEntry.timestamp = Date()
         saveContext()
         messages.append(userEntry)
-        print("💾 [ChatVM] Saved user message locally. Total messages: \(messages.count)")
-
-        // Construct conversation context from all messages
+        Swift.print("💾 [ChatVM] Saved user message locally. Total messages: \(messages.count)")
+        
         let conversationContext = messages.map { message -> String in
             let roleLabel = (message.role ?? "User").capitalized
             return "\(roleLabel): \(message.content ?? "")"
         }.joined(separator: "\n")
-        print("📜 [ChatVM] Sending conversation context:\n\(conversationContext)")
-
-        // Call GPT-4o with full conversation history
+        Swift.print("📜 [ChatVM] Sending conversation context:\n\(conversationContext)")
+        
         Task {
             do {
-                print("🤖 [ChatVM] Sending conversation context to GPT-4o...")
+                Swift.print("🤖 [ChatVM] Sending conversation context to GPT-4o...")
                 let reply = try await chatService.sendMessage(systemPrompt: SystemPrompts.defaultPrompt, userMessage: conversationContext)
-                print("🤖 [ChatVM] Received GPT-4o reply: \(reply)")
+                Swift.print("🤖 [ChatVM] Received GPT-4o reply: \(reply)")
                 let assistantEntry = ChatMessageEntity(context: context)
                 assistantEntry.id = UUID()
                 assistantEntry.content = reply
@@ -79,10 +107,10 @@ final class ChatViewModel: ObservableObject {
                 assistantEntry.timestamp = Date()
                 saveContext()
                 messages.append(assistantEntry)
-                print("💾 [ChatVM] Saved assistant message locally. Total messages: \\(messages.count)")
+                Swift.print("💾 [ChatVM] Saved assistant message locally. Total messages: \(messages.count)")
                 isAssistantTyping = false
             } catch let serviceErr {
-                print("❌ [ChatVM] Error calling GPT-4o: \(serviceErr.localizedDescription)")
+                Swift.print("❌ [ChatVM] Error calling GPT-4o: \(serviceErr.localizedDescription)")
             }
         }
     }
@@ -90,9 +118,9 @@ final class ChatViewModel: ObservableObject {
     private func saveContext() {
         do {
             try context.save()
-            print("💾 [ChatVM] Context saved successfully")
+            Swift.print("💾 [ChatVM] Context saved successfully")
         } catch let saveErr {
-            print("❌ [ChatVM] Failed to save context: \(saveErr.localizedDescription)")
+            Swift.print("❌ [ChatVM] Failed to save context: \(saveErr.localizedDescription)")
         }
     }
     
@@ -100,9 +128,8 @@ final class ChatViewModel: ObservableObject {
         Task {
             isAssistantTyping = true
             do {
-                // Send a hidden user message ("init") to prompt the assistant's welcome reply.
                 let reply = try await chatService.sendMessage(systemPrompt: SystemPrompts.defaultPrompt, userMessage: "init")
-                print("🤖 [ChatVM] Received initial assistant reply: \(reply)")
+                Swift.print("🤖 [ChatVM] Received initial assistant reply: \(reply)")
                 let assistantEntry = ChatMessageEntity(context: context)
                 assistantEntry.id = UUID()
                 assistantEntry.content = reply
@@ -110,17 +137,16 @@ final class ChatViewModel: ObservableObject {
                 assistantEntry.timestamp = Date()
                 saveContext()
                 messages.append(assistantEntry)
-                print("💾 [ChatVM] Saved initial assistant message locally. Total messages: \\(messages.count)")
+                Swift.print("💾 [ChatVM] Saved initial assistant message locally. Total messages: \(messages.count)")
                 isAssistantTyping = false
             } catch {
-                print("❌ [ChatVM] Error sending initial hidden message: \(error.localizedDescription)")
+                Swift.print("❌ [ChatVM] Error sending initial hidden message: \(error.localizedDescription)")
                 isAssistantTyping = false
             }
         }
     }
     
     func clearConversation() {
-        // Update sessionStart to current time to hide previous messages from future fetches.
         sessionStart = Date()
         messages.removeAll()
         loadMessages()
