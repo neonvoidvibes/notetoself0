@@ -4,6 +4,19 @@ import SwiftUI
 
 @MainActor
 final class ChatViewModel: ObservableObject {
+    private var sessionStart: Date {
+        get {
+            if let stored = UserDefaults.standard.object(forKey: "ChatSessionStart") as? Date {
+                return stored
+            }
+            let now = Date()
+            UserDefaults.standard.set(now, forKey: "ChatSessionStart")
+            return now
+        }
+        set {
+            UserDefaults.standard.set(newValue, forKey: "ChatSessionStart")
+        }
+    }
     @Published var messages: [ChatMessageEntity] = []
     private let context = PersistenceController.shared.container.viewContext
     private let chatService = GPT4ChatService.shared
@@ -15,10 +28,11 @@ final class ChatViewModel: ObservableObject {
 
     private func loadMessages() {
         let request = NSFetchRequest<ChatMessageEntity>(entityName: "ChatMessageEntity")
+        request.predicate = NSPredicate(format: "timestamp >= %@", sessionStart as NSDate)
         request.sortDescriptors = [NSSortDescriptor(key: "timestamp", ascending: true)]
         do {
             messages = try context.fetch(request)
-            print("✅ [ChatVM] Loaded \(messages.count) messages from Core Data")
+            print("✅ [ChatVM] Loaded \(messages.count) messages from Core Data (since sessionStart)")
         } catch let fetchErr {
             print("❌ [ChatVM] Failed to load messages: \(fetchErr.localizedDescription)")
         }
@@ -73,7 +87,8 @@ final class ChatViewModel: ObservableObject {
     }
     
     func clearConversation() {
-        // For now, just remove all messages from memory, do not remove from store.
+        // Update sessionStart to current time to hide previous messages from future fetches.
+        sessionStart = Date()
         messages.removeAll()
     }
 }
