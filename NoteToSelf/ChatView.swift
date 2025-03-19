@@ -3,11 +3,10 @@ import SwiftUI
 struct ChatView: View {
     @StateObject private var viewModel = ChatViewModel()
     @State private var currentInput: String = ""
-    @State private var hasInitiallyLoaded = false
     
-    // We'll define some animation states for the agent status text
+    // We'll define some animation states if needed (like for textFlowAnimation).
     @State private var textFlowAnimation: Bool = false
-
+    
     var body: some View {
         VStack(spacing: 0) {
             // Top toolbar row with clear conversation button
@@ -32,16 +31,8 @@ struct ChatView: View {
                             .id(message.id)
                     }
                     
-                    // If the agent is working on retrieval, show the status message with text fade-in effect
-                    if let status = viewModel.agentStatusMessage, viewModel.isAgentWorking {
-                        statusMessageView(status: status)
-                            .padding(.leading, 24)
-                            .padding(.trailing, 16)
-                            .padding(.vertical, 24)
-                    }
-                    
-                    // If the assistant is typing (like normal LLM response), show loading dot
-                    if viewModel.isAssistantTyping && !viewModel.isAgentWorking {
+                    // If the assistant is typing, show loading dot
+                    if viewModel.isAssistantTyping {
                         HStack {
                             UIStyles.assistantLoadingIndicator
                             Spacer()
@@ -73,12 +64,6 @@ struct ChatView: View {
                         }
                     }
                 }
-                .onChange(of: viewModel.isAgentWorking) { _, _ in
-                    // scroll to bottom if the agent status message changes
-                    withAnimation {
-                        scrollProxy.scrollTo("BottomAnchor", anchor: .bottom)
-                    }
-                }
             }
             
             // Black margin between chat bubbles and the input container
@@ -88,7 +73,7 @@ struct ChatView: View {
             
             // Chat input container
             HStack(spacing: 8) {
-                if !(viewModel.isAssistantTyping || viewModel.isAgentWorking) {
+                if !viewModel.isAssistantTyping {
                     // Normal text editor + send button
                     TextEditor(text: $currentInput)
                         .font(UIStyles.bodyFont)
@@ -143,43 +128,11 @@ struct ChatView: View {
         }
         .background(UIStyles.chatBackground.edgesIgnoringSafeArea(.all))
     }
-    
-    // Agent status message with fade from right to left
-    @ViewBuilder
-    private func statusMessageView(status: String) -> some View {
-        HStack {
-            // We'll add an overlay that masks the text and moves from right to left
-            ZStack(alignment: .leading) {
-                Text(status)
-                    .font(UIStyles.bodyFont)
-                    .foregroundColor(.white)
-                    .lineLimit(2)
-                    .padding()
-                    .background(Color.clear)
-                    .mask(
-                        LinearGradient(gradient: Gradient(colors: [
-                            Color.white.opacity(textFlowAnimation ? 1.0 : 0.0),
-                            Color.white.opacity(0.0)
-                        ]),
-                                       startPoint: textFlowAnimation ? .trailing : .leading,
-                                       endPoint: textFlowAnimation ? .leading : .trailing)
-                            .animation(Animation.linear(duration: 1.3).repeatForever(autoreverses: true), value: textFlowAnimation)
-                    )
-                    .onAppear {
-                        textFlowAnimation = true
-                    }
-                    .onDisappear {
-                        textFlowAnimation = false
-                    }
-            }
-            Spacer()
-        }
-    }
 }
 
 struct ChatMessageBubble: View {
     let message: ChatMessageEntity
-
+    
     var body: some View {
         HStack {
             if message.role == "assistant" {
