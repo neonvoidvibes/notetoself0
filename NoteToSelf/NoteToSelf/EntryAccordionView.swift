@@ -20,8 +20,9 @@ struct EntryAccordionView: View {
                     if let color = UIStyles.moodColors[base] {
                         Circle()
                             .fill(color.opacity(opacity))
-                            .frame(width: 12, height: 12)
+                            .frame(width: 18, height: 18)
                             .frame(maxWidth: .infinity, alignment: .trailing)
+                            .padding(.trailing, 6)
                     }
                 }
             }
