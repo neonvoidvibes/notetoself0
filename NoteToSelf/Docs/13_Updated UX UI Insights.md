@@ -83,6 +83,7 @@ A single **Settings** button (gear icon) resides in the top right of the navigat
    - No complex side drawers or blurred overlays; everything is direct & minimal.  
    - **Haptic feedback** on key taps: “+” button, saving a note, toggling advanced insight expansions, subscription purchase steps.  
    - Subtle fade or slide animations for expansions, short transitions to keep the “premium” vibe.
+   - Implement **Auto Layout constraints**: a powerful system in iOS development that uses constraints to define the size and position of views in the user interface. It allows for dynamic and responsive layouts that adapt to different screen sizes and orientations.
 
 ---
 
