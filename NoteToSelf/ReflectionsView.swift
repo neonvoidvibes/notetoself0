@@ -1,7 +1,7 @@
 import SwiftUI
 
-struct ChatView: View {
-    @StateObject private var viewModel = ChatViewModel()
+struct ReflectionsView: View {
+    @StateObject private var viewModel = ReflectionsViewModel()
     @State private var currentInput: String = ""
     
     // We'll define some animation states if needed.
@@ -27,7 +27,7 @@ struct ChatView: View {
             ScrollViewReader { scrollProxy in
                 ScrollView {
                     ForEach(viewModel.messages, id: \.id) { message in
-                        ChatMessageBubble(message: message)
+                        ReflectionMessageBubble(message: message)
                             .id(message.id)
                     }
                     
@@ -71,7 +71,7 @@ struct ChatView: View {
                 .fill(Color.black)
                 .frame(height: 20)
             
-            // Chat input container: always styled consistently using the shared background color.
+            // Chat input container
             HStack(spacing: 8) {
                 TextEditor(text: viewModel.isAssistantTyping ? .constant("") : $currentInput)
                     .font(UIStyles.bodyFont)
@@ -117,8 +117,8 @@ struct ChatView: View {
     }
 }
 
-struct ChatMessageBubble: View {
-    let message: ChatMessageEntity
+struct ReflectionMessageBubble: View {
+    let message: ChatMessageEntity  // Keeping entity name for now
 
     var body: some View {
         HStack {
@@ -150,8 +150,8 @@ struct ChatMessageBubble: View {
     }
 }
 
-struct ChatView_Previews: PreviewProvider {
+struct ReflectionsView_Previews: PreviewProvider {
     static var previews: some View {
-        ChatView()
+        ReflectionsView()
     }
 }

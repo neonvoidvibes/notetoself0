@@ -1,17 +1,15 @@
 import SwiftUI
 
 enum AppTab: CaseIterable {
-    case overview
-    case notes
+    case journal
     case insights
-    case chat
+    case reflections
     
     var title: String {
         switch self {
-        case .overview: return "Overview"
-        case .notes:    return "Notes"
-        case .insights: return "Insights"
-        case .chat:     return "Chat"
+        case .journal:     return "Journal"
+        case .insights:    return "Insights"
+        case .reflections: return "Reflections"
         }
     }
 }
@@ -43,7 +41,7 @@ struct TabBarView: View {
                                     contentWidth = contentGeo.size.width
                                     updateChevronVisibility(containerWidth: geo.size.width)
                                 }
-                                .onChange(of: contentGeo.size.width) { oldValue, newValue in
+                                .onChange(of: contentGeo.size.width) { _, newValue in
                                     contentWidth = newValue
                                     updateChevronVisibility(containerWidth: geo.size.width)
                                 }
@@ -89,7 +87,7 @@ struct TabBarView: View {
             }
             .contentShape(Rectangle())
             .offset(x: -scrollOffset)
-            .onChange(of: selectedTab) { oldTab, newTab in
+            .onChange(of: selectedTab) { _, newTab in
                 DispatchQueue.main.async {
                     centerSelected(tab: newTab, containerWidth: geo.size.width)
                 }
@@ -107,7 +105,7 @@ struct TabBarView: View {
                 .fill(tab == selectedTab ? UIStyles.accentColor : Color.clear)
                 .frame(height: 3)
         }
-        .padding(.vertical, 32)  // Extra spacing above and below each tab item
+        .padding(.vertical, 32)
         .onTapGesture {
             withAnimation {
                 selectedTab = tab
@@ -137,31 +135,26 @@ struct TabBarView: View {
     }
     
     private func centerSelected(tab: AppTab, containerWidth: CGFloat) {
-        if tab == .overview {
+        // We'll just do a simple approach:
+        // If user selects the first tab, offset=0
+        // If user selects last tab, offset=some max
+        // Middle for the middle tab. A more robust approach would measure the position
+        switch tab {
+        case .journal:
             scrollOffset = 0
-            updateChevronVisibility(containerWidth: containerWidth)
-            return
-        }
-        if tab == .chat {
+        case .insights:
+            let approxMid = contentWidth / 2 - containerWidth / 2
+            scrollOffset = max(0, min(approxMid, contentWidth - containerWidth))
+        case .reflections:
             let maxOffset = max(contentWidth - containerWidth, 0)
             scrollOffset = maxOffset
-            updateChevronVisibility(containerWidth: containerWidth)
-            return
         }
-        
-        let tabIndex = AppTab.allCases.firstIndex(of: tab) ?? 0
-        let itemWidth: CGFloat = 80
-        let xPos = (itemWidth + tabSpacing) * CGFloat(tabIndex) + tabPadding
-        let halfWidth = containerWidth / 2
-        let newOffset = xPos - halfWidth + (itemWidth / 2)
-        let maxOffset = contentWidth - containerWidth
-        scrollOffset = min(maxOffset, max(0, newOffset))
         updateChevronVisibility(containerWidth: containerWidth)
     }
 }
 
 struct TabBarView_Previews: PreviewProvider {
-    @State static var selectedTab: AppTab = .overview
+    @State static var selectedTab: AppTab = .journal
     static var previews: some View {
         TabBarView(selectedTab: $selectedTab)
             .frame(height: 50)

@@ -1,7 +1,7 @@
 import SwiftUI
 import CoreData
 
-struct NotesView: View {
+struct JournalView: View {
     @Environment(\.managedObjectContext) private var moc
     @FetchRequest(
         sortDescriptors: [NSSortDescriptor(keyPath: \JournalEntryEntity.timestamp, ascending: false)],
@@ -11,17 +11,15 @@ struct NotesView: View {
     @State private var expandedEntry: NSManagedObjectID? = nil
     @State private var showNewEntryView = false
     
-    // Draft text & mood for new entry
     @State private var draftNoteText: String = ""
     @State private var draftMood: String = "Neutral"
     
-    // State for entry pending deletion
     @State private var entryToDelete: JournalEntryEntity? = nil
     
     var body: some View {
         UIStyles.CustomZStack {
             VStack(alignment: .leading, spacing: 20) {
-                Text("Notes")
+                Text("Journal")
                     .font(UIStyles.headingFont)
                     .foregroundColor(UIStyles.textColor)
                     .padding(.bottom, 20)
@@ -107,9 +105,9 @@ struct NotesView: View {
     }
 }
 
-struct NotesView_Previews: PreviewProvider {
+struct JournalView_Previews: PreviewProvider {
     static var previews: some View {
         let context = PersistenceController.preview.container.viewContext
-        return NotesView().environment(\.managedObjectContext, context)
+        return JournalView().environment(\.managedObjectContext, context)
     }
 }

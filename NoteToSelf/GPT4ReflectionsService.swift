@@ -1,8 +1,8 @@
 import Foundation
 import OpenAI
 
-final class GPT4ChatService {
-    static let shared = GPT4ChatService()
+final class GPT4ReflectionsService {
+    static let shared = GPT4ReflectionsService()
     private let openAIClient: ResponsesAPI
 
     private init() {

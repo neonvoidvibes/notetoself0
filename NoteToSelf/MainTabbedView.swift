@@ -1,226 +1,90 @@
 import SwiftUI
 
 struct MainTabbedView: View {
-    @State private var selectedTab: AppTab = .overview
-    
-    // States for side menus
-    @State private var showMainMenu = false
+    @State private var selectedTab: AppTab = .journal
     @State private var showSettingsMenu = false
-    
-    // Matched geometry namespace for animating icons
-    @Namespace private var menuIconNamespace
-    
-    // Horizontal padding for icons (using the global horizontal padding from UIStyles)
-    private let menuIconHorizontalPadding: CGFloat = UIStyles.globalHorizontalPadding
     
     var body: some View {
         ZStack {
-            // Enforce full black background to avoid white flashes
             UIStyles.appBackground.ignoresSafeArea()
             
             GeometryReader { geo in
-                ZStack {
-                    // MAIN CONTENT
-                    ZStack {
-                        VStack(spacing: 0) {
-                            // TOP BAR
-                            HStack {
-                                // Always show left menu icon.
-                                AnimatedMenuIcon(isOpen: showMainMenu)
-                                    .matchedGeometryEffect(id: "leftMenuIcon", in: menuIconNamespace)
-                                    .onTapGesture {
-                                        withAnimation(.easeInOut) {
-                                            if showSettingsMenu { showSettingsMenu = false }
-                                            showMainMenu.toggle()
-                                        }
-                                    }
-                                    .padding(.horizontal, menuIconHorizontalPadding)
-                                
-                                Spacer()
-                                
-                                // Always show right settings icon.
-                                AnimatedSettingsIcon(isOpen: showSettingsMenu)
-                                    .matchedGeometryEffect(id: "rightSettingsIcon", in: menuIconNamespace)
-                                    .onTapGesture {
-                                        withAnimation(.easeInOut) {
-                                            if showMainMenu { showMainMenu = false }
-                                            showSettingsMenu.toggle()
-                                        }
-                                    }
-                                    .padding(.horizontal, menuIconHorizontalPadding)
+                VStack(spacing: 0) {
+                    // Top Bar
+                    HStack {
+                        Spacer()
+                        Button {
+                            withAnimation(.easeInOut) {
+                                showSettingsMenu.toggle()
                             }
-                            .padding(.top, UIStyles.topSpacing)
-                            .padding(.bottom, 10)
-                            
-                            // TAB BAR (header row) with bottom spacing (vertical padding of 32 is set inside TabBarView)
-                            TabBarView(selectedTab: $selectedTab)
-                                .padding(.bottom, 20)
-                                .frame(height: 50)
-                            
-                            // SELECTED CONTENT with extra top padding so it appears below the TabBarView
-                            ZStack {
-                                switch selectedTab {
-                                case .overview:
-                                    OverviewView()
-                                case .notes:
-                                    NotesView()
-                                case .insights:
-                                    InsightsView()
-                                case .chat:
-                                    ChatView()
-                                }
-                            }
-                            .padding(.top, 16)
-                            .frame(maxWidth: .infinity, maxHeight: .infinity)
+                        } label: {
+                            Image(systemName: "gearshape.fill")
+                                .font(.system(size: 24))
+                                .foregroundColor(UIStyles.offWhite)
                         }
-                        .background(UIStyles.appBackground.ignoresSafeArea())
-                        .cornerRadius((showMainMenu || showSettingsMenu) ? 20 : 0)
+                        .padding(.trailing, UIStyles.globalHorizontalPadding)
                     }
-                    // Offset main content and apply blur effect when a menu is open.
-                    .offset(x: showMainMenu ? geo.size.width * 0.6 :
-                            (showSettingsMenu ? -geo.size.width * 0.6 : 0))
-                    .blur(radius: (showMainMenu || showSettingsMenu) ? 5 : 0)
-                    .animation(.easeInOut, value: showMainMenu || showSettingsMenu)
-                    .edgesIgnoringSafeArea(.all)
+                    .padding(.top, UIStyles.topSpacing)
+                    .padding(.bottom, 10)
                     
-                    // BLACK OVERLAY for tap-outside to close menus.
-                    if showMainMenu || showSettingsMenu {
-                        Color.black
-                            .opacity(0.4)
-                            .ignoresSafeArea()
-                            .onTapGesture {
-                                withAnimation(.easeInOut) {
-                                    showMainMenu = false
+                    // Tab Bar
+                    TabBarView(selectedTab: $selectedTab)
+                        .padding(.bottom, 20)
+                        .frame(height: 50)
+                    
+                    // Selected Content
+                    ZStack {
+                        switch selectedTab {
+                        case .journal:
+                            JournalView()
+                        case .insights:
+                            InsightsView()
+                        case .reflections:
+                            ReflectionsView()
+                        }
+                    }
+                    .padding(.top, 16)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                }
+            }
+            
+            if showSettingsMenu {
+                Color.black
+                    .opacity(0.4)
+                    .ignoresSafeArea()
+                    .onTapGesture {
+                        withAnimation(.easeInOut) {
+                            showSettingsMenu = false
+                        }
+                    }
+                
+                GeometryReader { geo in
+                    VStack {
+                        HStack {
+                            Spacer()
+                            Button {
+                                withAnimation {
                                     showSettingsMenu = false
                                 }
+                            } label: {
+                                Image(systemName: "xmark")
+                                    .font(.system(size: 20, weight: .bold))
+                                    .foregroundColor(.white)
+                                    .padding()
                             }
-                    }
-                    
-                    // LEFT SIDE MENU
-                    if showMainMenu {
-                        HStack(spacing: 0) {
-                            VStack {
-                                HStack {
-                                    Spacer()
-                                    AnimatedMenuIcon(isOpen: showMainMenu)
-                                        .matchedGeometryEffect(id: "leftMenuIcon", in: menuIconNamespace)
-                                        .onTapGesture {
-                                            withAnimation(.easeInOut) {
-                                                showMainMenu = false
-                                            }
-                                        }
-                                        .padding(.horizontal, menuIconHorizontalPadding)
-                                }
-                                .padding(.vertical, UIStyles.topSpacing)
-                                Spacer()
-                            }
-                            .frame(minWidth: geo.size.width * 0.8, maxWidth: geo.size.width * 0.8, minHeight: 0, maxHeight: .infinity, alignment: .top)
-                            .background(UIStyles.secondaryBackground.ignoresSafeArea())
-                            .transition(.move(edge: .leading))
-                            
-                            Spacer()
                         }
-                        .edgesIgnoringSafeArea(.all)
+                        Spacer()
+                        Text("Settings Menu Here")
+                            .font(UIStyles.headingFont)
+                            .foregroundColor(.white)
+                        Spacer()
                     }
-                    
-                    // RIGHT SIDE MENU
-                    if showSettingsMenu {
-                        HStack(spacing: 0) {
-                            Spacer()
-                            VStack {
-                                HStack {
-                                    AnimatedSettingsIcon(isOpen: showSettingsMenu)
-                                        .matchedGeometryEffect(id: "rightSettingsIcon", in: menuIconNamespace)
-                                        .onTapGesture {
-                                            withAnimation(.easeInOut) {
-                                                showSettingsMenu = false
-                                            }
-                                        }
-                                        .padding(.horizontal, menuIconHorizontalPadding)
-                                    Spacer()
-                                }
-                                .padding(.vertical, UIStyles.topSpacing)
-                                Spacer()
-                            }
-                            .frame(minWidth: geo.size.width * 0.8, maxWidth: geo.size.width * 0.8, minHeight: 0, maxHeight: .infinity, alignment: .top)
-                            .background(UIStyles.secondaryBackground.ignoresSafeArea())
-                            .transition(.move(edge: .trailing))
-                        }
-                        .edgesIgnoringSafeArea(.all)
-                    }
+                    .frame(maxWidth: geo.size.width * 0.8, maxHeight: .infinity)
+                    .background(Color(hex: "#111111"))
+                    .transition(.move(edge: .trailing))
                 }
             }
         }
-    }
-}
-
-struct AnimatedMenuIcon: View {
-    var isOpen: Bool
-    
-    var body: some View {
-        GeometryReader { geo in
-            let w = geo.size.width
-            let lineHeight: CGFloat = 2
-            let spacing: CGFloat = 8
-            
-            ZStack(alignment: .topLeading) {
-                Rectangle()
-                    .fill(Color.white)
-                    .frame(width: isOpen ? w * 0.8 : w, height: lineHeight)
-                Rectangle()
-                    .fill(Color.white)
-                    .frame(width: isOpen ? w : w * 0.8, height: lineHeight)
-                    .offset(y: spacing)
-            }
-        }
-        .frame(width: 24, height: 8)
-        .animation(.easeInOut, value: isOpen)
-    }
-}
-
-struct AnimatedSettingsIcon: View {
-    var isOpen: Bool
-    
-    var body: some View {
-        GeometryReader { geo in
-            let width = geo.size.width
-            let lineHeight: CGFloat = 2
-            let spacing: CGFloat = 8
-            let circleDiameter: CGFloat = 8
-            
-            ZStack(alignment: .topLeading) {
-                Rectangle()
-                    .fill(Color.white)
-                    .frame(width: width, height: lineHeight)
-                
-                ZStack {
-                    Circle()
-                        .fill(Color.black)
-                        .frame(width: circleDiameter, height: circleDiameter)
-                    Circle()
-                        .stroke(Color.white, lineWidth: 1)
-                        .frame(width: circleDiameter, height: circleDiameter)
-                }
-                .offset(x: isOpen ? 2 : (width - circleDiameter - 2), y: -circleDiameter/2)
-                
-                Rectangle()
-                    .fill(Color.white)
-                    .frame(width: width, height: lineHeight)
-                    .offset(y: spacing)
-                
-                ZStack {
-                    Circle()
-                        .fill(Color.black)
-                        .frame(width: circleDiameter, height: circleDiameter)
-                    Circle()
-                        .stroke(Color.white, lineWidth: 1)
-                        .frame(width: circleDiameter, height: circleDiameter)
-                }
-                .offset(x: isOpen ? (width - circleDiameter - 2) : 2, y: spacing - circleDiameter/2)
-            }
-        }
-        .frame(width: 24, height: 8)
-        .animation(.easeInOut, value: isOpen)
     }
 }
 
