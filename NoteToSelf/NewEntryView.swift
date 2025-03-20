@@ -70,7 +70,7 @@ struct NewEntryView: View {
                 }) {
                     Text("Save")
                 }
-                .buttonStyle(UIStyles.FullWidthSaveButtonStyle())
+                .buttonStyle(UIStyles.fullWidthSaveButtonStyle)
                 .padding(.horizontal, 16)
                 .padding(.bottom, 16)
             }

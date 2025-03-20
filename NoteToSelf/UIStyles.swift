@@ -1,21 +1,56 @@
 import SwiftUI
 
+// MARK: - Custom Button Styles (Top-level)
+
+struct PrimaryButtonStyle: ButtonStyle {
+    func makeBody(configuration: ButtonStyle.Configuration) -> some View {
+        Group {
+            configuration.label
+                .font(UIStyles.bodyFont)
+                .foregroundColor(.black)
+                .padding(.horizontal, 20)
+                .padding(.vertical, 12)
+                .background(UIStyles.accentColor)
+                .cornerRadius(UIStyles.defaultCornerRadius)
+                .scaleEffect(configuration.isPressed ? 0.95 : 1.0)
+                .opacity(configuration.isPressed ? 0.8 : 1.0)
+        }
+    }
+}
+
+struct FullWidthSaveButtonStyle: ButtonStyle {
+    func makeBody(configuration: ButtonStyle.Configuration) -> some View {
+        Group {
+            configuration.label
+                .font(UIStyles.bodyFont)
+                .foregroundColor(.black)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 12)
+                .background(UIStyles.accentColor)
+                .cornerRadius(UIStyles.saveButtonCornerRadius)
+                .scaleEffect(configuration.isPressed ? 0.95 : 1.0)
+                .opacity(configuration.isPressed ? 0.8 : 1.0)
+        }
+    }
+}
+
+// MARK: - UIStyles: Centralized UI Configuration
+
 struct UIStyles {
+    
     // MARK: - Colors
-    static let appBackground = Color(hex: "#000000")   // Full black background
+    static let appBackground = Color(hex: "#000000")
     static let cardBackground = Color("CardBackground")
     static let accentColor = Color(hex: "#FFFF00")
     static let secondaryAccentColor = Color(hex: "#989898")
     static let textColor = Color("TextColor")
     static let offWhite = Color(red: 0.95, green: 0.95, blue: 0.95)
     static let entryBackground = Color(hex: "#0A0A0A")
-    
     static let secondaryBackground = Color(hex: "#111111")
     static let tertiaryBackground = Color(hex: "#313131")
-    // New quaternary color for intensity modal background
     static let quaternaryBackground = Color(hex: "#555555")
     
-    // Proper colors for moods
+    // Mood colors dictionary for mood tracking
     static let moodColors: [String: Color] = [
         "Happy": Color(red: 1.0, green: 0.84, blue: 0.0),
         "Neutral": Color.gray,
@@ -26,14 +61,10 @@ struct UIStyles {
     
     // MARK: - Chat UI Colors and Styles
     static let chatBackground = Color(hex: "#000000")
-    // Define chat input container background color
     static let chatInputContainerBackground = Color(hex: "#313131")
-    static let chatInputContainerCornerRadius: CGFloat = 12
-    static let chatInputFieldBackground = chatInputContainerBackground
-    // Update chat bubble colors per new spec
+    static let chatFont = Font.custom("Menlo", size: 16)
     static let userMessageBubbleColor = offWhite
     static let assistantMessageBubbleColor = Color(hex: "#555555")
-    static let chatFont = Font.custom("Menlo", size: 16)
     
     // MARK: - Layout Constants
     static let globalHorizontalPadding: CGFloat = 20
@@ -42,14 +73,45 @@ struct UIStyles {
     
     // MARK: - Typography
     static let headingFont = Font.custom("Menlo", size: 36)
-    static let headingFontSize: CGFloat = 36
     static let bodyFont = Font.custom("Menlo", size: 16)
     static let smallLabelFont = Font.custom("Menlo", size: 14)
     static let tinyHeadlineFont = Font.custom("Menlo", size: 12)
-    static let streakHeadlineFont = Font.custom("Menlo", size: 28)
+    
+    // MARK: - Corners & Radii
+    static let defaultCornerRadius: CGFloat = 12
+    static let saveButtonCornerRadius: CGFloat = 30
+    static let chatInputContainerCornerRadius: CGFloat = 12
+    
+    // MARK: - Exposed Button Styles
+    static var fullWidthSaveButtonStyle: FullWidthSaveButtonStyle { FullWidthSaveButtonStyle() }
+    
+    // MARK: - Chat Bubble Shape
+    struct ChatBubbleShape: Shape {
+        var isUser: Bool
+        func path(in rect: CGRect) -> Path {
+            let path: UIBezierPath
+            if isUser {
+                path = UIBezierPath(roundedRect: rect,
+                                    byRoundingCorners: [.topLeft, .topRight, .bottomLeft],
+                                    cornerRadii: CGSize(width: defaultCornerRadius, height: defaultCornerRadius))
+            } else {
+                path = UIBezierPath(roundedRect: rect,
+                                    byRoundingCorners: [.topLeft, .topRight, .bottomRight],
+                                    cornerRadii: CGSize(width: defaultCornerRadius, height: defaultCornerRadius))
+            }
+            return Path(path.cgPath)
+        }
+    }
+    
+    // MARK: - Assistant Loading Indicator
+    static var assistantLoadingIndicator: some View {
+        Circle()
+            .fill(offWhite)
+            .frame(width: 20, height: 20)
+            .modifier(BreathingAnimation())
+    }
     
     // MARK: - Custom Containers
-    
     struct CustomZStack<Content: View>: View {
         let content: () -> Content
         init(@ViewBuilder content: @escaping () -> Content) {
@@ -88,81 +150,25 @@ struct UIStyles {
             .padding(.vertical, 4)
         }
     }
-    
-    // MARK: - Custom Button Styles
-    
-    struct PrimaryButtonStyle: ButtonStyle {
-        func makeBody(configuration: ButtonStyle.Configuration) -> some View {
-            configuration.label
-                .font(UIStyles.bodyFont)
-                .foregroundColor(.black)
-                .padding(.horizontal, 20)
-                .padding(.vertical, 12)
-                .background(UIStyles.accentColor)
-                .cornerRadius(UIStyles.defaultCornerRadius)
-                .scaleEffect(configuration.isPressed ? 0.95 : 1.0)
-                .opacity(configuration.isPressed ? 0.8 : 1.0)
-        }
-    }
-    
-    static func primaryButton<Label: View>(@ViewBuilder label: @escaping () -> Label) -> some View {
-        Button(action: {}) {
-            label()
-        }
-        .buttonStyle(PrimaryButtonStyle())
-    }
-    
-    struct FullWidthSaveButtonStyle: ButtonStyle {
-        func makeBody(configuration: ButtonStyle.Configuration) -> some View {
-            configuration.label
-                .font(UIStyles.bodyFont)
-                .foregroundColor(.black)
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 12)
-                .background(UIStyles.accentColor)
-                .cornerRadius(UIStyles.saveButtonCornerRadius)
-                .scaleEffect(configuration.isPressed ? 0.95 : 1.0)
-                .opacity(configuration.isPressed ? 0.8 : 1.0)
-        }
-    }
-    
-    static let saveButtonCornerRadius: CGFloat = 30
-    
-    struct Card<Content: View>: View {
-        let content: () -> Content
-        init(@ViewBuilder content: @escaping () -> Content) {
-            self.content = content
-        }
-        var body: some View {
-            VStack(spacing: 8) {
-                content()
-            }
-            .padding()
-            .background(cardBackground)
-            .cornerRadius(defaultCornerRadius)
-            .shadow(color: .black.opacity(0.15), radius: 4, x: 0, y: 2)
-        }
-    }
-    
-    static let defaultCornerRadius: CGFloat = 12
-    
-    // MARK: - Chat Bubble Shape
-    struct ChatBubbleShape: Shape {
-        var isUser: Bool
-        func path(in rect: CGRect) -> Path {
-            let path: UIBezierPath
-            if isUser {
-                // Round all corners except lower right for user messages
-                path = UIBezierPath(roundedRect: rect, byRoundingCorners: [.topLeft, .topRight, .bottomLeft], cornerRadii: CGSize(width: defaultCornerRadius, height: defaultCornerRadius))
-            } else {
-                // Round all corners except lower left for assistant messages
-                path = UIBezierPath(roundedRect: rect, byRoundingCorners: [.topLeft, .topRight, .bottomRight], cornerRadii: CGSize(width: defaultCornerRadius, height: defaultCornerRadius))
-            }
-            return Path(path.cgPath)
-        }
+}
+
+// MARK: - Bottom Sheet Style Modifier and Extension
+struct BottomSheetStyleModifier: ViewModifier {
+    func body(content: Content) -> some View {
+        content
+            .presentationDetents([.height(420), .large])
+            .presentationCornerRadius(30)
+            .presentationDragIndicator(.visible)
     }
 }
 
+extension View {
+    func applyBottomSheetStyle() -> some View {
+        self.modifier(BottomSheetStyleModifier())
+    }
+}
+
+// MARK: - Hex Color Helper
 extension Color {
     init(hex: String) {
         let hex = hex.trimmingCharacters(in: CharacterSet.alphanumerics.inverted)
@@ -171,11 +177,14 @@ extension Color {
         let a, r, g, b: UInt64
         switch hex.count {
         case 3:
-            (a, r, g, b) = (255, (int >> 8) * 17, (int >> 4 & 0xF) * 17, (int & 0xF) * 17)
+            (a, r, g, b) = (255, (int >> 8)*17, (int >> 4 & 0xF)*17, (int & 0xF)*17)
         case 6:
             (a, r, g, b) = (255, int >> 16, int >> 8 & 0xFF, int & 0xFF)
         case 8:
-            (a, r, g, b) = (int >> 24, int >> 16 & 0xFF, int >> 8 & 0xFF, int & 0xFF)
+            (a, r, g, b) = (int >> 24,
+                            int >> 16 & 0xFF,
+                            int >> 8 & 0xFF,
+                            int & 0xFF)
         default:
             (a, r, g, b) = (255, 0, 0, 0)
         }
@@ -189,34 +198,7 @@ extension Color {
     }
 }
 
-struct BottomSheetStyleModifier: ViewModifier {
-    func body(content: Content) -> some View {
-        content
-            .presentationDetents([.height(420), .large])
-            .presentationCornerRadius(30)
-            .presentationDragIndicator(.visible)
-    }
-}
-
-extension View {
-    func applyBottomSheetStyle() -> some View {
-        modifier(BottomSheetStyleModifier())
-    }
-}
-
-extension String {
-    func baseMood() -> String {
-        return self.components(separatedBy: "|").first ?? self
-    }
-    
-    func moodOpacity() -> CGFloat {
-        if let part = self.components(separatedBy: "|").last, let value = Double(part) {
-            return CGFloat(value)
-        }
-        return 1.0
-    }
-}
-
+// MARK: - Breathing Animation for Loading Indicator
 struct BreathingAnimation: ViewModifier {
     @State private var scale: CGFloat = 1.0
     func body(content: Content) -> some View {
@@ -231,11 +213,17 @@ struct BreathingAnimation: ViewModifier {
     }
 }
 
-extension UIStyles {
-    static var assistantLoadingIndicator: some View {
-        Circle()
-            .fill(offWhite)
-            .frame(width: 20, height: 20)
-            .modifier(BreathingAnimation())
+// MARK: - String Extension for Mood Utilities
+extension String {
+    func baseMood() -> String {
+        return self.components(separatedBy: "|").first ?? self
+    }
+    
+    func moodOpacity() -> CGFloat {
+        if let lastComponent = self.components(separatedBy: "|").last,
+           let opacity = Double(lastComponent) {
+            return CGFloat(opacity)
+        }
+        return 1.0
     }
 }

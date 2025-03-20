@@ -21,7 +21,7 @@ struct OnboardingView: View {
                 }) {
                     Text("Get Started")
                 }
-                .buttonStyle(UIStyles.PrimaryButtonStyle())
+                .buttonStyle(PrimaryButtonStyle())
                 .padding(.top, 32)
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
