@@ -5,7 +5,7 @@
         <attribute name="text" optional="YES" attributeType="String"/>
         <attribute name="timestamp" attributeType="Date" defaultDateTimeInterval="763952340" usesScalarValueType="NO"/>
     </entity>
-    <entity name="ChatMessageEntity" representedClassName="ChatMessageEntity" syncable="YES" codeGenerationType="class">
+    <entity name="ReflectionMessageEntity" representedClassName="ReflectionMessageEntity" syncable="YES" codeGenerationType="class">
         <attribute name="id" optional="YES" attributeType="UUID" usesScalarValueType="NO"/>
         <attribute name="content" optional="YES" attributeType="String"/>
         <attribute name="role" optional="YES" attributeType="String"/>

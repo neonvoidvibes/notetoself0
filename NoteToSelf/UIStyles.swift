@@ -59,12 +59,12 @@ struct UIStyles {
         "Excited": Color.orange
     ]
     
-    // MARK: - Chat UI Colors and Styles
-    static let chatBackground = Color(hex: "#000000")
-    static let chatInputContainerBackground = Color(hex: "#313131")
-    static let chatFont = Font.custom("Menlo", size: 16)
-    static let userMessageBubbleColor = offWhite
-    static let assistantMessageBubbleColor = Color(hex: "#555555")
+    // MARK: - Renamed Reflection (formerly chat) UI Colors and Styles
+    static let reflectionBackground = Color(hex: "#000000")
+    static let reflectionInputContainerBackground = Color(hex: "#313131")
+    static let reflectionFont = Font.custom("Menlo", size: 16)
+    static let reflectionUserBubbleColor = offWhite
+    static let reflectionAssistantBubbleColor = Color(hex: "#555555")
     
     // MARK: - Layout Constants
     static let globalHorizontalPadding: CGFloat = 20
@@ -80,12 +80,11 @@ struct UIStyles {
     // MARK: - Corners & Radii
     static let defaultCornerRadius: CGFloat = 12
     static let saveButtonCornerRadius: CGFloat = 30
-    static let chatInputContainerCornerRadius: CGFloat = 12
     
     // MARK: - Exposed Button Styles
     static var fullWidthSaveButtonStyle: FullWidthSaveButtonStyle { FullWidthSaveButtonStyle() }
     
-    // MARK: - Chat Bubble Shape
+    // MARK: - Chat (Reflections) Bubble Shape
     struct ChatBubbleShape: Shape {
         var isUser: Bool
         func path(in rect: CGRect) -> Path {
@@ -103,8 +102,8 @@ struct UIStyles {
         }
     }
     
-    // MARK: - Assistant Loading Indicator
-    static var assistantLoadingIndicator: some View {
+    // MARK: - Reflection Assistant Loading Indicator
+    static var reflectionAssistantLoadingIndicator: some View {
         Circle()
             .fill(offWhite)
             .frame(width: 20, height: 20)
