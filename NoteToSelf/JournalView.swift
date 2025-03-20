@@ -15,55 +15,73 @@ struct JournalView: View {
     @State private var draftMood: String = "Neutral"
     
     @State private var entryToDelete: JournalEntryEntity? = nil
-    
+
     var body: some View {
-        UIStyles.CustomZStack {
+        ZStack {
+            // Background
+            UIStyles.appBackground.ignoresSafeArea()
+
             VStack(alignment: .leading, spacing: 20) {
                 Text("Journal")
                     .font(UIStyles.headingFont)
                     .foregroundColor(UIStyles.textColor)
-                    .padding(.bottom, 20)
-                
-                HStack {
-                    Spacer()
-                    Button {
-                        withAnimation {
-                            showNewEntryView = true
-                        }
-                    } label: {
-                        Image(systemName: "square.and.pencil")
-                            .font(.system(size: 28))
-                            .foregroundColor(UIStyles.offWhite)
-                    }
-                }
-                
+                    .padding(.top, 16)
+                    .padding(.bottom, 4)
+                    .padding(.leading, UIStyles.globalHorizontalPadding)
+
+                // The main scrollable list
                 ScrollViewReader { proxy in
                     List {
                         ForEach(entries) { entry in
-                            EntryAccordionView(entry: entry, isExpanded: expandedEntry == entry.objectID)
-                                .id(entry.objectID)
-                                .listRowInsets(EdgeInsets())
-                                .listRowBackground(Color.clear)
-                                .onTapGesture {
-                                    withAnimation {
-                                        if expandedEntry == entry.objectID {
-                                            expandedEntry = nil
-                                        } else {
-                                            expandedEntry = entry.objectID
-                                            proxy.scrollTo(entry.objectID, anchor: .bottom)
-                                        }
+                            EntryAccordionView(
+                                entry: entry,
+                                isExpanded: expandedEntry == entry.objectID
+                            )
+                            .id(entry.objectID)
+                            .listRowInsets(EdgeInsets())
+                            .listRowBackground(Color.clear)
+                            .onTapGesture {
+                                withAnimation {
+                                    if expandedEntry == entry.objectID {
+                                        expandedEntry = nil
+                                    } else {
+                                        expandedEntry = entry.objectID
+                                        proxy.scrollTo(entry.objectID, anchor: .bottom)
                                     }
                                 }
-                                .swipeActions(edge: .trailing) {
-                                    Button(role: .destructive) {
-                                        entryToDelete = entry
-                                    } label: {
-                                        Text("Delete")
-                                    }
+                            }
+                            .swipeActions(edge: .trailing) {
+                                Button(role: .destructive) {
+                                    entryToDelete = entry
+                                } label: {
+                                    Text("Delete")
                                 }
+                            }
                         }
                     }
                     .listStyle(PlainListStyle())
+                }
+            }
+            
+            // Floating + button at bottom right
+            VStack {
+                Spacer()
+                HStack {
+                    Spacer()
+                    Button(action: {
+                        withAnimation {
+                            showNewEntryView = true
+                        }
+                    }) {
+                        Image(systemName: "plus")
+                            .font(.system(size: 24, weight: .bold))
+                            .foregroundColor(.black)
+                            .frame(width: 56, height: 56)
+                            .background(UIStyles.accentColor)
+                            .cornerRadius(28)
+                            .shadow(color: .black.opacity(0.3), radius: 4, x: 0, y: 2)
+                            .padding()
+                    }
                 }
             }
         }

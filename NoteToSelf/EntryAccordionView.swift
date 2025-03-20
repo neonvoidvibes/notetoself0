@@ -4,6 +4,13 @@ struct EntryAccordionView: View {
     var entry: JournalEntryEntity
     var isExpanded: Bool
 
+    // Lock logic: if older than 24 hours, we consider it locked
+    private var isLocked: Bool {
+        guard let timestamp = entry.timestamp else { return false }
+        let diff = Date().timeIntervalSince(timestamp)
+        return diff > 86400 // 24 hours in seconds
+    }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
             HStack {
@@ -26,14 +33,26 @@ struct EntryAccordionView: View {
                     }
                 }
             }
-            if isExpanded, let text = entry.text, !text.isEmpty {
-                Text(text)
-                    .font(UIStyles.bodyFont)
-                    .foregroundColor(.white)
-                if let timestamp = entry.timestamp {
-                    Text(timestamp, style: .date)
-                        .font(UIStyles.smallLabelFont)
+            // Expanded content
+            if isExpanded {
+                if let text = entry.text, !text.isEmpty {
+                    Text(text)
+                        .font(UIStyles.bodyFont)
                         .foregroundColor(.white)
+                }
+                if let timestamp = entry.timestamp {
+                    // Show date and locked label if needed
+                    HStack {
+                        Text(timestamp, style: .date)
+                            .font(UIStyles.smallLabelFont)
+                            .foregroundColor(.white)
+                        if isLocked {
+                            Text("Locked")
+                                .font(UIStyles.smallLabelFont)
+                                .foregroundColor(.red)
+                                .padding(.leading, 10)
+                        }
+                    }
                 }
             }
         }
@@ -49,9 +68,16 @@ struct EntryAccordionView_Previews: PreviewProvider {
         let sampleEntry = JournalEntryEntity(context: context)
         sampleEntry.text = "Sample Entry"
         sampleEntry.mood = "Happy"
-        sampleEntry.timestamp = Date()
+        sampleEntry.timestamp = Date().addingTimeInterval(-90000) // older than 24h
 
-        return EntryAccordionView(entry: sampleEntry, isExpanded: false)
-            .previewLayout(.sizeThatFits)
+        return Group {
+            EntryAccordionView(entry: sampleEntry, isExpanded: false)
+                .previewLayout(.sizeThatFits)
+                .previewDisplayName("Collapsed, locked")
+            EntryAccordionView(entry: sampleEntry, isExpanded: true)
+                .previewLayout(.sizeThatFits)
+                .previewDisplayName("Expanded, locked")
+        }
+        .background(Color.black)
     }
 }
