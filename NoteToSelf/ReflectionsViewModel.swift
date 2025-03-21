@@ -8,12 +8,9 @@ final class ReflectionsViewModel: ObservableObject {
     @Published var isUserStopping: Bool = false
     @Published var messages: [ReflectionMessageEntity] = []
     
-    // For daily free usage gating
+    // daily free usage gating
     private var dailyFreeMessageCount: Int = 0
     private let maxFreeMessagesPerDay: Int = 3
-    
-    // Temporary subscription placeholder
-    private var isUserSubscribed: Bool = false
     
     private let context = PersistenceController.shared.container.viewContext
     private let reflectionService = GPT4ReflectionsService.shared
@@ -55,9 +52,12 @@ final class ReflectionsViewModel: ObservableObject {
     
     func canSendMessage() -> Bool {
         resetDailyCountIfNewDay()
-        if isUserSubscribed {
+        
+        // check subscription from manager
+        if SubscriptionManager.shared.isUserSubscribed {
             return true
         }
+        
         return dailyFreeMessageCount < maxFreeMessagesPerDay
     }
     

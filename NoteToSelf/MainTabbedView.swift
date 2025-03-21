@@ -59,7 +59,7 @@ struct MainTabbedView: View {
                     }
                 
                 GeometryReader { geo in
-                    VStack {
+                    VStack(alignment: .leading, spacing: 16) {
                         HStack {
                             Spacer()
                             Button {
@@ -73,10 +73,14 @@ struct MainTabbedView: View {
                                     .padding()
                             }
                         }
-                        Spacer()
-                        Text("Settings Menu Here")
+                        
+                        // Subscription UI
+                        Text("Settings")
                             .font(UIStyles.headingFont)
                             .foregroundColor(.white)
+                        
+                        SubscriptionSettingsView()
+                        
                         Spacer()
                     }
                     .frame(maxWidth: geo.size.width * 0.8, maxHeight: .infinity)
@@ -85,6 +89,45 @@ struct MainTabbedView: View {
                 }
             }
         }
+    }
+}
+
+struct SubscriptionSettingsView: View {
+    @ObservedObject var subscriptionManager = SubscriptionManager.shared
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            if subscriptionManager.isUserSubscribed {
+                Text("You are subscribed!")
+                    .font(UIStyles.bodyFont)
+                    .foregroundColor(.green)
+                
+                Button("Unsubscribe (Debug)") {
+                    subscriptionManager.unsubscribeDebug()
+                }
+                .font(UIStyles.bodyFont)
+                .foregroundColor(.red)
+            } else {
+                Text("Subscribe for unlimited reflections & advanced analytics.")
+                    .font(UIStyles.bodyFont)
+                    .foregroundColor(.white)
+                
+                Button("Subscribe Monthly") {
+                    subscriptionManager.subscribeMonthly()
+                }
+                .padding()
+                .background(Color.green)
+                .foregroundColor(.black)
+                .cornerRadius(8)
+                
+                Button("Restore Purchases") {
+                    subscriptionManager.restorePurchase()
+                }
+                .font(UIStyles.bodyFont)
+                .foregroundColor(.white)
+            }
+        }
+        .padding()
     }
 }
 

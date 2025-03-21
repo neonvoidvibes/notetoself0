@@ -1,6 +1,6 @@
 <diff>
   <oldDocument name="13_Updated UX UI Insights.md" />
-  <newDocument name="13b_UpdatedUX_UIImplementationPlan.md">
+  <newDocument name="13b_UpdatedUX_UIImplementationPlan.xml">
     <!--
       This XML file breaks down the plan from Document 13 into logical, testable segments.
       It ensures all major points from Doc 13 are preserved, while structuring them
